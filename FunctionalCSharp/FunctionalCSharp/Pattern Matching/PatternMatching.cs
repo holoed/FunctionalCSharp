@@ -36,12 +36,17 @@ namespace FunctionalCSharp
 
         public PatternMatching<T> With<TYPE_PATTERN>(Func<TYPE_PATTERN, object> f)
         {
+            return With(_ => true, f);
+        }
+
+        public PatternMatching<T> With<TYPE_PATTERN>(Func<TYPE_PATTERN, bool> p, Func<TYPE_PATTERN, object> f)
+        {
             return new PatternMatching<T>(
                 () =>
-                    {
-                        var obj = _f();
-                        return obj is TYPE_PATTERN ? f((TYPE_PATTERN)obj) : obj;
-                    });
+                {
+                    var obj = _f();
+                    return obj is TYPE_PATTERN && p((TYPE_PATTERN)obj) ? f((TYPE_PATTERN)obj) : obj;
+                });
         }
 
         public TResult Return<TResult>()
