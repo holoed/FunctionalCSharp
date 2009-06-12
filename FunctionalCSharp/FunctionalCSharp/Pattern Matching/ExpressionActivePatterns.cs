@@ -14,14 +14,14 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace FunctionalCSharp
 {
     public static class ExpressionActivePatterns
     {
-        public static PatternMatching<T> Lambda<T>(this PatternMatching<T> x, Func<ICollection, Expression, object> f)
+        public static PatternMatching<T> Lambda<T>(this PatternMatching<T> x, Func<IEnumerable<ParameterExpression>, Expression, object> f)
         {
             return x.With<LambdaExpression>(p => f(p.Parameters, p.Body));
         }
@@ -29,6 +29,11 @@ namespace FunctionalCSharp
         public static PatternMatching<T> Param<T>(this PatternMatching<T> x, Func<string, object> f)
         {
             return x.With<ParameterExpression>(p => f(p.Name));
+        }
+
+        public static PatternMatching<T> Const<T>(this PatternMatching<T> x, Func<object, object> f)
+        {
+            return x.With<ConstantExpression>(c => f(c.Value));
         }
 
         public static PatternMatching<T> Add<T>(this PatternMatching<T> x, Func<Expression, Expression, object> f)

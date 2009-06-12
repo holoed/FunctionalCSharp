@@ -23,7 +23,7 @@ namespace FunctionalCSharpTests
     [TestFixture]
     public class ActivePatternsTests
     {
-         [Test]
+        [Test]
         public void MatchExpressionWithActivePatterns()
         {
             Expression<Func<int, int, int, int>> f = (x, y, z) => (x + y) * z;
@@ -32,12 +32,39 @@ namespace FunctionalCSharpTests
             toString = exp =>
                        exp.Match()
                            .Lambda((args, body) => toString(body))
-                           .Param ((name)       => name)
-                           .Add   ((l, r)       => String.Format("({0} + {1})", toString(l), toString(r)))
-                           .Mult  ((l, r)       => String.Format("{0} * {1}", toString(l), toString(r)))
+                           .Param((name) => name)
+                           .Add((l, r) => String.Format("({0} + {1})", toString(l), toString(r)))
+                           .Mult((l, r) => String.Format("{0} * {1}", toString(l), toString(r)))
                            .Return<string>();
 
             Assert.AreEqual("(x + y) * z", toString(f));
         }
+
+        [Test]
+        public void MatchEvenOddWithArithmeticActivePatterns()
+        {
+            Func<int, bool> even = null;
+            Func<int, bool> odd = null;
+            even = exp => exp.Match()
+                              .With(n => 0,     _ => true)
+                              .With(n => n + 1, n => odd(n))
+                              .Return<bool>();
+            odd = exp => !even(exp);
+
+            for (var i = 0; i < 10; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    Assert.IsTrue(even(i));
+                    Assert.IsFalse(odd(i));
+                }
+                else
+                {
+                    Assert.IsFalse(even(i));
+                    Assert.IsTrue(odd(i));
+                }
+            }
+        }
     }
 }
+
