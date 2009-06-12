@@ -17,19 +17,25 @@ using System;
 
 namespace FunctionalCSharp
 {
+    public struct Match
+    {
+        public object Value;
+        public bool Success;
+    }
+
     public static class PatternMatchingExtensions
     {
         public static PatternMatching<T> Match<T>(this T obj)
         {
-            return new PatternMatching<T>(() => obj); 
+            return new PatternMatching<T>(() => new Match{Value = obj, Success = false}); 
         }
     }
 
     public class PatternMatching<T>
     {
-        private readonly Func<object> _f;
+        private readonly Func<Match> _f;
 
-        public PatternMatching(Func<object> f)
+        public PatternMatching(Func<Match> f)
         {
             _f = f;
         }
@@ -43,18 +49,50 @@ namespace FunctionalCSharp
         {
             return new PatternMatching<T>(
                 () =>
-                {
-                    var obj = _f();
-                    return obj is TYPE_PATTERN && p((TYPE_PATTERN)obj) ? f((TYPE_PATTERN)obj) : obj;
-                });
+                    {
+                        var obj = _f();
+                        return obj.Success
+                                   ? obj
+                                   : (obj.Value is TYPE_PATTERN && p((TYPE_PATTERN) obj.Value) 
+                                          ? Success(f, obj) 
+                                          : Fail(obj));
+                    });
+        }
+
+        private static Match Fail(Match obj)
+        {
+            return new Match
+            {
+                Value = obj.Value,
+                Success = false
+            };
+        }
+
+        private static Match Success<TYPE_PATTERN>(Func<TYPE_PATTERN, object> f, Match obj)
+        {
+            return new Match
+                       {
+                           Value = f((TYPE_PATTERN) obj.Value),
+                           Success = true
+                       };
+        }
+
+        public PatternMatching<T> Any(Func<object> f)
+        {
+            return new PatternMatching<T>(
+                () =>
+                    {
+                        var obj = _f();
+                        return obj.Success ? obj : new Match {Value = f(), Success = true};
+                    });
         }
 
         public TResult Return<TResult>()
         {
             var ret = _f();
-            if (ret is TResult)
-                return (TResult)ret;
-            throw new MatchFailureException(String.Format("Failed to match: {0}", ret.GetType()));
+            if (ret.Success && ret.Value is TResult)
+                return (TResult)ret.Value;
+            throw new MatchFailureException(String.Format("Failed to match: {0}", ret.Value.GetType()));
         }
     }
 
