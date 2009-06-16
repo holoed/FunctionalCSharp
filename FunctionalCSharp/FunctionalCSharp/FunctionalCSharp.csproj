@@ -46,6 +46,7 @@
     <Compile Include="Maybe\Maybe.cs" />
     <Compile Include="Maybe\None.cs" />
     <Compile Include="Maybe\Some.cs" />
+    <Compile Include="Pattern Matching\LiteralActivePatterns.cs" />
     <Compile Include="Pattern Matching\MaybeActivePatterns.cs" />
     <Compile Include="Pattern Matching\ArithmeticActivePatterns.cs" />
     <Compile Include="Pattern Matching\ExpressionActivePatterns.cs" />
