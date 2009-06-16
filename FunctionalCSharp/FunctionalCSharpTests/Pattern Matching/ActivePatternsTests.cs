@@ -65,6 +65,32 @@ namespace FunctionalCSharpTests
                 }
             }
         }
+
+        [Test]
+        public void MatchSomeOrNoneWithActivePatterns()
+        {
+            Func<Maybe<int>, int> 
+            f = n => n.Match()
+                      .Some(x => x)
+                      .None(() => 42)
+                      .Return<int>();
+            Assert.AreEqual(5, f(5.Some()));
+            Assert.AreEqual(42, f(Maybe.None<int>()));
+        }
+
+        [Test]
+        public void MatchSomeLiteralOrNoneWithActivePatterns()
+        {
+            Func<Maybe<int>, bool>
+            isFortyTwo = n => n.Match()
+                               .Some(42, () => true)
+                               .Some(    x  => false)
+                               .None(    () => false)
+                               .Return<bool>();
+            Assert.IsTrue(isFortyTwo(42.Some()));
+            Assert.IsFalse(isFortyTwo(35.Some()));
+            Assert.IsFalse(isFortyTwo(Maybe.None<int>()));
+        }
     }
 }
 
