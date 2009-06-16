@@ -14,6 +14,9 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 using FunctionalCSharp;
 using NUnit.Framework;
@@ -131,6 +134,30 @@ namespace FunctionalCSharpTests
             catch (MatchFailureException e)
             { Assert.AreEqual("Failed to match: System.String", e.Message); }
         }
+
+        [Test]
+        public void MatchSequences()
+        {
+            Func<Func<char, char>, Func<IEnumerable<char>, IEnumerable<char>>> map = null;
+            map = f => s => s.Match()
+                             .List((x, xs) => f(x).Cons(map(f)(xs)))
+                             .Any(() => s)
+                             .Return<IEnumerable<char>>();
+            var toUpper = map(Char.ToUpper);
+
+            Assert.AreEqual("HELLO WORLD", toUpper("Hello World").Aggregate("", (x, y) => x + y));
+        }
+    }
+
+    public static class Extensions
+    {
+        public static IEnumerable<T> Cons<T>(this T head, IEnumerable<T> tail)
+        {
+            yield return head;
+            foreach (var item in tail)
+                yield return item;
+        }
+
     }
 }
 
