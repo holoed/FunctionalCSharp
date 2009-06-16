@@ -91,6 +91,46 @@ namespace FunctionalCSharpTests
             Assert.IsFalse(isFortyTwo(35.Some()));
             Assert.IsFalse(isFortyTwo(Maybe.None<int>()));
         }
+
+        [Test]
+        public void MatchNumbers()
+        {
+            Func<int, bool>
+            isFiveNotTwelve = n => n.Match()
+                                    .Value(5, () => true)
+                                    .Value(12, () => false)
+                                    .Return<bool>();
+            Assert.IsTrue(isFiveNotTwelve(5));
+            Assert.IsFalse(isFiveNotTwelve(12));
+
+            try
+            {
+                isFiveNotTwelve(42);
+                Assert.Fail();
+            }
+            catch (MatchFailureException e)
+            { Assert.AreEqual("Failed to match: System.Int32", e.Message); }
+        }
+
+        [Test]
+        public void MatchStrings()
+        {
+            Func<string, bool>
+            IsTrueOrFalse = n => n.Match()
+                                  .Value("Yes", () => true)
+                                  .Value("False", () => false)
+                                  .Return<bool>();
+            Assert.IsTrue(IsTrueOrFalse("Yes"));
+            Assert.IsFalse(IsTrueOrFalse("False"));
+
+            try
+            {
+                IsTrueOrFalse("Foo");
+                Assert.Fail();
+            }
+            catch (MatchFailureException e)
+            { Assert.AreEqual("Failed to match: System.String", e.Message); }
+        }
     }
 }
 
