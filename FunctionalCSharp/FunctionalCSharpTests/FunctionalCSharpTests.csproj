@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Object Expression\ObjectExpressionTests.cs" />
     <Compile Include="Pattern Matching\ActivePatternsTests.cs" />
     <Compile Include="Pattern Matching\PatternMatchingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
