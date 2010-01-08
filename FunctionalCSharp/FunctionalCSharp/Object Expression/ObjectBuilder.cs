@@ -22,20 +22,85 @@ using System.Threading;
 
 namespace FunctionalCSharp
 {
-    internal class ObjectBuilder
-    {
-        protected TypeBuilder _typeBuilder;
-        protected static ModuleBuilder _module;
+    public class ObjectBuilder
+    {     
         private static AssemblyBuilder _assemblyBuilder;
+        private static ModuleBuilder _module;
+        private TypeBuilder _typeBuilder;
         private string _generatedTypeName;
         private static int _id;
-        private ILGenerator _gen;
-        private FieldBuilder _membersField;
         private MethodBuilder _methodBuilder;
+        private FieldBuilder _methodsField;
+        private readonly IDictionary<string, Delegate> _methodsDictionary = new Dictionary<string, Delegate>();
+        private static readonly IDictionary<TypeKey, Type> TypeCache = new Dictionary<TypeKey, Type>();
+
+        private class TypeKey
+        {
+            private readonly string _key;
+
+            public static TypeKey Create<T>(IEnumerable<KeyValuePair<string, Delegate>> methods)
+            {
+                return new TypeKey(typeof(T), methods);
+            }
+
+            private TypeKey(Type type, IEnumerable<KeyValuePair<string, Delegate>> methods)
+            {
+                _key = type.FullName + methods.Aggregate(" ", (x, y) => x + " " + y.Key);
+            }
+
+            public override int GetHashCode()
+            {
+                return _key.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                var other = obj as TypeKey;
+                if (other == null) return false;
+                return _key == other._key;
+            }
+
+            public override string ToString()
+            {
+                return _key;
+            }
+        }
 
         static ObjectBuilder()
         {
-            SetupBuilderAndModule("ObjectExpressions");
+            SetupBuilderAndModule("Decorators");
+        }
+
+        private ObjectBuilder()
+        {}
+
+        public static ObjectBuilder New()
+        {
+            return new ObjectBuilder();
+        }
+
+        public void AddMethod(MethodInfo info, Delegate value)
+        {
+            var name = info.Name;
+            if (name.StartsWith("get_") &&
+                value.Method.GetParameters().Select(p => p.ParameterType).Contains(info.ReturnType))
+                name = name.Replace("get_", "set_");
+            _methodsDictionary.Add(GetMethodKey(info, name), value);
+            return;
+        }
+
+        private static string GetMethodKey(MethodInfo info, string name)
+        {
+            if (info.IsGenericMethod)
+                name = String.Format("{0}{1}", name,
+                                     info.GetGenericArguments().Select(t => t.FullName).Aggregate(
+                                         (x, y) => String.Format("{0}{1}", x, y)));
+            return name;
+        }
+
+        public T Return<T>()
+        {
+            return (T)Activator.CreateInstance(CreateType<T>(), _methodsDictionary);
         }
 
         private static void SetupBuilderAndModule(string moduleName)
@@ -45,36 +110,18 @@ namespace FunctionalCSharp
             _module = _assemblyBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
         }
 
-        public static T Build<T>(IDictionary<string, Member> impl)
+        private Type CreateType<T>()
         {
-            var builder = new ObjectBuilder();
-            var type = builder.CreateType<T>(impl);
-            return (T)Activator.CreateInstance(type, impl);
-        }
+            var typeKey = TypeKey.Create<T>(_methodsDictionary);
+            if (!TypeCache.ContainsKey(typeKey))
+            {
+                EmitEmptyType<T>();
+                EmitConstructor();
+                EmitMethods<T>();
+                TypeCache.Add(typeKey, _typeBuilder.CreateType());
+            }
 
-        private Type CreateType<T>(IDictionary<string, Member> impl)
-        {
-            EmitEmptyType<T>();
-            EmitConstructor();
-            EmitMembers<T>(impl);
-            var type = _typeBuilder.CreateType();
-            return type;
-        }
-
-        private void EmitEmptyType<T>()
-        {
-            _generatedTypeName = BuildDynamicName<T>();
-            _typeBuilder = _module.DefineType(_generatedTypeName, TypeAttributes.Public | TypeAttributes.Class);
-            _typeBuilder.AddInterfaceImplementation(typeof(T));
-            _membersField = _typeBuilder.DefineField(
-                   "_members",
-                   typeof(Dictionary<string, Member>),
-                   FieldAttributes.Private);
-        }
-
-        private static string BuildDynamicName<T>()
-        {
-            return typeof(T).Name + "Generated" + _id++;
+            return TypeCache[typeKey];
         }
 
         private void EmitConstructor()
@@ -82,130 +129,127 @@ namespace FunctionalCSharp
             var constructorBuilder = _typeBuilder.DefineConstructor(
                 MethodAttributes.Public,
                 CallingConventions.Standard,
-                new[] { typeof(Dictionary<string, Member>) });
-            constructorBuilder.DefineParameter(1, ParameterAttributes.In, "members");
+                new[] { _methodsDictionary.GetType() });
+            constructorBuilder.DefineParameter(1, ParameterAttributes.In, "methods");
 
-            _gen = constructorBuilder.GetILGenerator();
-            EmitConstructorBody();
+            var gen = constructorBuilder.GetILGenerator();
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_1);
+            gen.Emit(OpCodes.Stfld, _methodsField);
+            gen.Emit(OpCodes.Ret);
         }
 
-        private void EmitConstructorBody()
+        private void EmitMethods<T>()
         {
-            _gen.Emit(OpCodes.Ldarg_0);
-            _gen.Emit(OpCodes.Ldarg_1);
-            _gen.Emit(OpCodes.Stfld, _membersField);
-            _gen.Emit(OpCodes.Ret);
+            var interfaceType = typeof(T);
+            var methods = GetAllMethods(interfaceType);
+            foreach (var method in methods)
+                CreateMethod(method);
+            foreach (var method in typeof(object).GetMethods().Where(HasLambdaToDelegateTo))
+                CreateMethod(method);
         }
 
-        private void EmitMembers<T>(IDictionary<string, Member> members)
+        private static IEnumerable<MethodInfo> GetAllMethods(Type interfaceType)
         {
-            foreach (var member in members.Values)
-                EmitMember<T>(member);
-
-            foreach (var info in GetAllMethods(typeof(T)).Distinct()
-                .Except(members.Select(m => m.Value.Info)).Where(m => !m.IsSpecialName))
-                EmitNotImplementedMethod(info);
+            var interfaces = interfaceType.GetInterfaces();
+            if (interfaces != null)
+                foreach (var method in interfaces.SelectMany(i => i.GetMethods()))
+                    yield return method;
+            foreach (var method in interfaceType.GetMethods())
+                yield return method;
         }
 
-        private void EmitMember<T>(Member member)
+        private void CreateMethod(MethodInfo method)
         {
-            foreach (var info in
-                GetAllMethods(typeof(T))
-                    .Where(item => item.MetadataToken == member.Info.MetadataToken)
-                    .Distinct())
-                EmitMember<T>(info);
-        }
-
-        private void EmitMember<T>(MethodInfo info)
-        {
-            var attributes = info.Attributes;
+            var attributes = method.Attributes;
             attributes &= ~MethodAttributes.Abstract;
             _methodBuilder = _typeBuilder.DefineMethod(
-                info.Name, attributes, info.ReturnType, GetParameterTypes(info));
-            if (info.ContainsGenericParameters)
-                _methodBuilder.DefineGenericParameters(info.GetGenericArguments().Select(type => type.Name).ToArray());
-            _gen = _methodBuilder.GetILGenerator();
-            EmitMemberBody<T>(info);
+                method.Name,
+                attributes,
+                CallingConventions.Standard,
+                method.ReturnType,
+                method
+                    .GetParameters()
+                    .Select(p => p.ParameterType).ToArray());
+
+            if (method.IsVirtual && !method.IsAbstract)
+                _typeBuilder.DefineMethodOverride(_methodBuilder, method);
+
+            if (method.ContainsGenericParameters)
+                _methodBuilder.DefineGenericParameters(method.GetGenericArguments().Select(type => type.Name).ToArray());
+
+            CreateMethodBody(method);
         }
 
-        private void EmitMemberBody<T>(MethodInfo info)
+        private void CreateMethodBody(MethodInfo interfaceMethod)
         {
-            _gen.Emit(OpCodes.Ldarg_0);
-            _gen.Emit(OpCodes.Ldfld, _membersField);
-            _gen.Emit(OpCodes.Ldstr, info.MetadataToken.ToString());
+            var il = _methodBuilder.GetILGenerator();
+            if (HasLambdaToDelegateTo(interfaceMethod))
+                DelegateToLambda(il, interfaceMethod);
+            else
+                il.ThrowException(typeof (NotImplementedException));
+        }
+
+        private bool HasLambdaToDelegateTo(MethodInfo method)
+        {
+            if (method.IsGenericMethod)
+                return true;
+            return _methodsDictionary.ContainsKey(GetMethodKey(method, method.Name));
+        }       
+
+        private void DelegateToLambda(ILGenerator il, MethodInfo method)
+        {
+            var listLocal = il.DeclareLocal(typeof(List<object>));
+            var argsLocal = il.DeclareLocal(typeof(object[]));
+            il.Emit(OpCodes.Newobj, typeof(List<object>).GetConstructor(new Type[0]));
+            il.Emit(OpCodes.Stloc, listLocal);
+            var parameters = method.GetParameters();
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                il.Emit(OpCodes.Ldloc, listLocal);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                if (parameters[i].ParameterType.IsValueType)
+                    il.Emit(OpCodes.Box, parameters[i].ParameterType);
+                il.Emit(OpCodes.Callvirt, typeof(List<object>).GetMethod("Add"));
+            }
+            il.Emit(OpCodes.Ldloc, listLocal);
+            il.Emit(OpCodes.Callvirt, typeof(List<object>).GetMethod("ToArray"));
+            il.Emit(OpCodes.Stloc, argsLocal);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, _methodsField);
+            il.Emit(OpCodes.Ldstr, method.Name);
             if (_methodBuilder.IsGenericMethod)
             {
-                _gen.Emit(OpCodes.Ldtoken, info.GetGenericArguments()[0]);
-                _gen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"));
-                _gen.Emit(OpCodes.Callvirt, typeof(Type).GetProperty("FullName").GetGetMethod());
-                _gen.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) }));
+                il.Emit(OpCodes.Ldtoken, method.GetGenericArguments()[0]);
+                il.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"));
+                il.Emit(OpCodes.Callvirt, typeof(Type).GetProperty("FullName").GetGetMethod());
+                il.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) }));
             }
+            il.Emit(OpCodes.Callvirt, typeof(Dictionary<string, Delegate>).GetProperty("Item").GetGetMethod());
 
-            _gen.Emit(OpCodes.Callvirt, typeof(Dictionary<string, Member>).GetProperty("Item").GetGetMethod());
-            _gen.Emit(OpCodes.Ldfld, typeof(Member).GetField("Implementation"));
+            il.Emit(OpCodes.Ldloc, argsLocal);
+            il.Emit(OpCodes.Callvirt, typeof(Delegate).GetMethod("DynamicInvoke"));
+            if (method.ReturnType == typeof(void))
+                il.Emit(OpCodes.Pop);
+            else if (method.ReturnType.IsValueType || method.ReturnType.IsGenericParameter)
+                il.Emit(OpCodes.Unbox_Any, method.ReturnType);
 
-
-            if (info.ReturnType == typeof (void))
-                EmitActionCall(info);
-            else
-                EmitFunctionCall<T>();
-            _gen.Emit(OpCodes.Ret);
+            il.Emit(OpCodes.Ret);
         }
 
-        private void EmitFunctionCall<T>()
+        private void EmitEmptyType<T>()
         {
-            _gen.Emit(OpCodes.Callvirt, typeof (Func<T>).GetMethod("Invoke"));
+            _generatedTypeName = BuildDynamicName<T>();
+            _typeBuilder = _module.DefineType(_generatedTypeName, TypeAttributes.Public | TypeAttributes.Class);
+            _typeBuilder.AddInterfaceImplementation(typeof(T));
+            _methodsField = _typeBuilder.DefineField("methods", _methodsDictionary.GetType(), FieldAttributes.Private);
         }
 
-        private void EmitActionCall(MethodInfo info)
+        private static string BuildDynamicName<T>()
         {
-            var parameters = info.GetParameters();
-            Type type;
-            if (parameters.Length > 0)
-            {
-                type = GetType(parameters);
-                _gen.Emit(OpCodes.Ldarg_1);
-            }
-            else type = typeof (Action);
-
-            _gen.Emit(OpCodes.Callvirt, type.GetMethod("Invoke"));
+            return typeof(T).Name + "Emitted" + _id++;
         }
 
-        private static Type GetType(IEnumerable<ParameterInfo> parameters)
-        {
-            return typeof(Action<>).MakeGenericType(parameters
-                                                        .Select(item => item.ParameterType)
-                                                        .ToArray());
-        }
-
-        private static IEnumerable<MethodInfo> GetAllMethods(Type type)
-        {
-            foreach (var method in type.GetMethods().Where(m => !m.IsSpecialName))
-                yield return method;
-            foreach (var baseType in type.GetInterfaces())
-                foreach (var baseMethod in GetAllMethods(baseType))
-                    yield return baseMethod;
-        }
-
-        private void EmitNotImplementedMethod(MethodInfo info)
-        {
-            var attributes = info.Attributes;
-            attributes &= ~MethodAttributes.Abstract;
-            _methodBuilder = _typeBuilder.DefineMethod(
-                info.Name, attributes, info.ReturnType, GetParameterTypes(info));
-            if (info.ContainsGenericParameters)
-                _methodBuilder.DefineGenericParameters(info.GetGenericArguments().Select(type => type.Name).ToArray());
-            _gen = _methodBuilder.GetILGenerator();
-            _gen.ThrowException(typeof(NotImplementedException));
-        }
-
-        private static Type[] GetParameterTypes(MethodInfo method)
-        {
-            var parameters = method.GetParameters();
-            var parameterTypes = new List<Type>();
-            foreach (var parameter in parameters)
-                parameterTypes.Add(parameter.ParameterType);
-            return parameterTypes.ToArray();
-        }
     }
 }
