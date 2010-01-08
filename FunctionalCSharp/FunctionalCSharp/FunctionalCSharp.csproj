@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{DC55BA21-EEBF-4488-9ABA-BEA806EA9A07}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -46,8 +46,9 @@
     <Compile Include="Maybe\Maybe.cs" />
     <Compile Include="Maybe\None.cs" />
     <Compile Include="Maybe\Some.cs" />
-    <Compile Include="Object Expression\ObjectExpression.cs" />
     <Compile Include="Object Expression\ObjectBuilder.cs" />
+    <Compile Include="Object Expression\ObjectExpression.cs" />
+    <Compile Include="Object Expression\ObjectBuilderExtensions.cs" />
     <Compile Include="Pattern Matching\ListActivePatterns.cs" />
     <Compile Include="Pattern Matching\LiteralActivePatterns.cs" />
     <Compile Include="Pattern Matching\MaybeActivePatterns.cs" />

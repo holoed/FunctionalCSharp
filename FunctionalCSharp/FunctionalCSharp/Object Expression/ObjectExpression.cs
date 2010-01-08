@@ -14,14 +14,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace FunctionalCSharp
 {
-    public class ObjectExpression
+    public static class ObjectExpression
     {
         public static ObjectExpression<T> New<T>()
         {
@@ -29,49 +26,36 @@ namespace FunctionalCSharp
         }
     }
 
-    public struct Member
-    {
-        public string Key;
-        public MethodInfo Info;
-        public Delegate Implementation;
-    }
-
     public class ObjectExpression<T>
     {
-        private readonly IDictionary<string, Member> _impl = new Dictionary<string, Member>();
+        private readonly ObjectBuilder _decorator;
 
-        public ObjectExpression<T> With(Expression<Action<T>> name, Action<T> impl)
+        public ObjectExpression()
         {
-            With(name, (o => { impl(o); return default(T); }));
+            _decorator = ObjectBuilder.New();
+        }
+
+        public ObjectExpression<T> With(Expression<Func<T, Action>> method, Action handler)
+        {
+            _decorator.AddMethod(method, handler);
             return this;
         }
 
-        public ObjectExpression<T> With<K>(Expression<Action<T>> name, Action<K> impl)
+        public ObjectExpression<T> With<T1>(Expression<Func<T, Action<T1>>> method, Action<T1> handler)
         {
-            var methodCall = (MethodCallExpression)name.Body;
-            var method = new Member { Key = methodCall.Method.MetadataToken.ToString(), Info = methodCall.Method, Implementation = impl };
-            _impl.Add(BuildKey(method), method);
+            _decorator.AddMethod(method, handler);
             return this;
         }
 
-        public ObjectExpression<T> With<K>(Expression<Action<T>> name, Func<T, K> impl)
+        public ObjectExpression<T> With<T1>(Expression<Func<T, Func<T1>>> method, Func<T1> handler)
         {
-            var methodCall = (MethodCallExpression)name.Body;
-            var method = new Member { Key = methodCall.Method.MetadataToken.ToString(), Info = methodCall.Method, Implementation = impl };
-            _impl.Add(BuildKey(method), method);
+            _decorator.AddMethod(method, handler);
             return this;
         }
 
         public T Return()
         {
-            return ObjectBuilder.Build<T>(_impl);
-        }
-
-        private static string BuildKey(Member member)
-        {
-            if (member.Info.IsGenericMethod)
-                return member.Key + member.Info.GetGenericArguments().Select(item => item.FullName).Aggregate("", (x, y) => (x + y));
-            return member.Key;
+            return _decorator.Return<T>();
         }
     }
 }
