@@ -47,7 +47,19 @@ namespace FunctionalCSharp
             return this;
         }
 
+        public ObjectExpression<T> With<T1, T2>(Expression<Func<T, Action<T1, T2>>> method, Action<T1, T2> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }
+
         public ObjectExpression<T> With<T1>(Expression<Func<T, Func<T1>>> method, Func<T1> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }
+
+        public ObjectExpression<T> With<T1, T2>(Expression<Func<T, Func<T1, T2>>> method, Func<T1, T2> handler)
         {
             _decorator.AddMethod(method, handler);
             return this;

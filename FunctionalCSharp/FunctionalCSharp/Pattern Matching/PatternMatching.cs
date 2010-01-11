@@ -29,6 +29,11 @@ namespace FunctionalCSharp
         {
             return new PatternMatching<T>(() => new Match{Value = obj, Success = false}); 
         }
+
+        public static PatternMatching<T> Default<T>(this PatternMatching<T> x, Func<object, object> f)
+        {
+            return x.With<T>(b => true, b => f(b));
+        }
     }
 
     public class PatternMatching<T>

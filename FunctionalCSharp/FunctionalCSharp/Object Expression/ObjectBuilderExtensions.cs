@@ -33,7 +33,19 @@ namespace FunctionalCSharp
             return;
         }
 
+        public static void AddMethod<T, T1, T2>(this ObjectBuilder host, Expression<Func<T, Action<T1, T2>>> method, Action<T1, T2> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
         public static void AddMethod<T, T1>(this ObjectBuilder host, Expression<Func<T, Func<T1>>> method, Func<T1> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
+        public static void AddMethod<T, T1, T2>(this ObjectBuilder host, Expression<Func<T, Func<T1, T2>>> method, Func<T1, T2> handler)
         {
             host.AddMethod(GetMethodInfo(method), handler);
             return;

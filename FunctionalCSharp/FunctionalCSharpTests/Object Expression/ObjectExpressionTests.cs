@@ -15,7 +15,9 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using FunctionalCSharp;
+using FunctionalCSharp.Tuples;
 using NUnit.Framework;
 
 namespace FunctionalCSharpTests
@@ -64,6 +66,18 @@ namespace FunctionalCSharpTests
                                       .With<string>(o => o.A, x => result = x)
                                       .Return();
             foo.A("Hello");
+            Assert.AreEqual("Hello", result);
+        }
+
+        [Test]
+        public void MethodTakes2Args()
+        {         
+            Tuple<int, string> result = null;
+            var foo = ObjectExpression.New<IDictionary<int, string>>()
+                                      .With(o => o.Add, (int key, string value) => { result = Tuple.New(key, value); })
+                                      .Return();
+            foo.Add(42, "Hello");
+            Assert.AreEqual(Tuple.New(42, "Hello"), result);
         }
 
         [Test]
@@ -137,13 +151,6 @@ namespace FunctionalCSharpTests
             Assert.AreEqual("Hello World", foo.B<string>());
         }
 
-        public interface IoC_Container
-        {
-            T Get<T>();
-        }
-
-        public interface IBar {}
-
         [Test]
         public void ExampleOfSimpleIoCContainer()
         {
@@ -156,5 +163,12 @@ namespace FunctionalCSharpTests
             Assert.IsInstanceOf(typeof(IFoo), container.Get<IFoo>());
             Assert.IsInstanceOf(typeof(IBar), container.Get<IBar>());
         }
+
+        public interface IoC_Container
+        {
+            T Get<T>();
+        }
+
+        public interface IBar { }
     }
 }
