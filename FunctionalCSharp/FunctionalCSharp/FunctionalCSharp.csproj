@@ -55,6 +55,7 @@
     <Compile Include="Pattern Matching\ArithmeticActivePatterns.cs" />
     <Compile Include="Pattern Matching\ExpressionActivePatterns.cs" />
     <Compile Include="Pattern Matching\PatternMatching.cs" />
+    <Compile Include="Pattern Matching\TupleActivePatterns.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tuples\Tuple.cs" />
   </ItemGroup>
