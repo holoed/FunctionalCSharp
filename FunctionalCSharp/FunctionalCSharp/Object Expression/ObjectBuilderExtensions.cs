@@ -39,6 +39,18 @@ namespace FunctionalCSharp
             return;
         }
 
+        public static void AddMethod<T, T1, T2, T3>(this ObjectBuilder host, Expression<Func<T, Action<T1, T2, T3>>> method, Action<T1, T2, T3> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
+        public static void AddMethod<T, T1, T2, T3, T4>(this ObjectBuilder host, Expression<Func<T, Action<T1, T2, T3, T4>>> method, Action<T1, T2, T3, T4> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
         public static void AddMethod<T, T1>(this ObjectBuilder host, Expression<Func<T, Func<T1>>> method, Func<T1> handler)
         {
             host.AddMethod(GetMethodInfo(method), handler);
@@ -52,6 +64,18 @@ namespace FunctionalCSharp
         }
 
         public static void AddMethod<T, T1, T2, T3>(this ObjectBuilder host, Expression<Func<T, Func<T1, T2, T3>>> method, Func<T1, T2, T3> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
+        public static void AddMethod<T, T1, T2, T3, T4>(this ObjectBuilder host, Expression<Func<T, Func<T1, T2, T3, T4>>> method, Func<T1, T2, T3, T4> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
+        public static void AddMethod<T, T1, T2, T3, T4, T5>(this ObjectBuilder host, Expression<Func<T, Func<T1, T2, T3, T4, T5>>> method, Func<T1, T2, T3, T4, T5> handler)
         {
             host.AddMethod(GetMethodInfo(method), handler);
             return;

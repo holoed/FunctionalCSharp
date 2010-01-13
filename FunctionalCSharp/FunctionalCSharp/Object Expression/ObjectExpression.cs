@@ -53,6 +53,18 @@ namespace FunctionalCSharp
             return this;
         }
 
+        public ObjectExpression<T> With<T1, T2, T3>(Expression<Func<T, Action<T1, T2, T3>>> method, Action<T1, T2, T3> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }
+
+        public ObjectExpression<T> With<T1, T2, T3, T4>(Expression<Func<T, Action<T1, T2, T3, T4>>> method, Action<T1, T2, T3, T4> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }       
+
         public ObjectExpression<T> With<T1>(Expression<Func<T, Func<T1>>> method, Func<T1> handler)
         {
             _decorator.AddMethod(method, handler);
@@ -70,6 +82,18 @@ namespace FunctionalCSharp
             _decorator.AddMethod(method, handler);
             return this;
         }
+
+        public ObjectExpression<T> With<T1, T2, T3, T4>(Expression<Func<T, Func<T1, T2, T3, T4>>> method, Func<T1, T2, T3, T4> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }
+
+        public ObjectExpression<T> With<T1, T2, T3, T4, T5>(Expression<Func<T, Func<T1, T2, T3, T4, T5>>> method, Func<T1, T2, T3, T4, T5> handler)
+        {
+            _decorator.AddMethod(method, handler);
+            return this;
+        }      
 
         public T Return()
         {
