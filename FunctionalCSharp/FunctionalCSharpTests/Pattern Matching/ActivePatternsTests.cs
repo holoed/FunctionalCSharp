@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using FunctionalCSharp;
+using FunctionalCSharp.Tuples;
 using NUnit.Framework;
 
 namespace FunctionalCSharpTests
@@ -145,6 +146,33 @@ namespace FunctionalCSharpTests
             var toUpper = map(Char.ToUpper);
 
             Assert.AreEqual("HELLO WORLD", toUpper("Hello World").Aggregate("", (x, y) => x + y));
+        }
+
+        [Test]
+        public void MatchTuples()
+        {
+            var value = Tuple.New(42, "Hello");
+            Assert.AreEqual(42, value.Match()
+                                     .Tuple((x, _) => x)
+                                     .Return<int>());
+            Assert.AreEqual("Hello", value.Match()
+                                     .Tuple((_, s) => s)
+                                     .Return<string>());
+        }
+
+        [Test]
+        public void MatchTuples3()
+        {
+            var value = Tuple.New(42, "Hello", new DateTime());
+            Assert.AreEqual(42, value.Match()
+                                     .Tuple((x, y, z) => x)
+                                     .Return<int>());
+            Assert.AreEqual("Hello", value.Match()
+                                     .Tuple((x, y, z) => y)
+                                     .Return<string>());
+            Assert.AreEqual(new DateTime(), value.Match()
+                                                 .Tuple((x, y, z) => z)
+                                                 .Return<DateTime>());
         }
     }
 

@@ -42,6 +42,12 @@ namespace FunctionalCSharp.Tuples
                 .Return();
         }
 
+        public static Tuple<T1, Tuple<T2, T3>> New<T1, T2, T3>(T1 t1, T2 t2, T3 t3)
+        {
+            return New(t1, New(t2, t3));
+                
+        }
+
         private static string ToString<T>(T value)
         {
             return value
