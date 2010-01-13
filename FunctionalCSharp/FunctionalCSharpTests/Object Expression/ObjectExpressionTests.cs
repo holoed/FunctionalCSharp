@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using FunctionalCSharp;
 using FunctionalCSharp.Tuples;
 using NUnit.Framework;
@@ -162,6 +163,24 @@ namespace FunctionalCSharpTests
 
             Assert.IsInstanceOf(typeof(IFoo), container.Get<IFoo>());
             Assert.IsInstanceOf(typeof(IBar), container.Get<IBar>());
+        }
+
+        [Test]
+        public void ComparerTest()
+        {
+            var list = new SortedList<int, string>(
+                ObjectExpression
+                .New<IComparer<int>>()
+                .With(o => o.Compare, (int x, int y) => x - y)
+                .Return());
+
+            list.Add(3, "l");
+            list.Add(2, "e");
+            list.Add(4, "l");
+            list.Add(1, "H");
+            list.Add(5, "o");
+
+            Assert.AreEqual("Hello", list.Values.Aggregate((x, y) => x + y));                
         }
 
         public interface IoC_Container

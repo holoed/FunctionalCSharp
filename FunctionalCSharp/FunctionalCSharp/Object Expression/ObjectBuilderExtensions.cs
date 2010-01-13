@@ -51,6 +51,12 @@ namespace FunctionalCSharp
             return;
         }
 
+        public static void AddMethod<T, T1, T2, T3>(this ObjectBuilder host, Expression<Func<T, Func<T1, T2, T3>>> method, Func<T1, T2, T3> handler)
+        {
+            host.AddMethod(GetMethodInfo(method), handler);
+            return;
+        }
+
         private static MethodInfo GetMethodInfo(Expression exp)
         {
             return exp.Match()
