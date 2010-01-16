@@ -32,7 +32,7 @@ namespace FunctionalCSharp
         private MethodBuilder _methodBuilder;
         private FieldBuilder _methodsField;
         private readonly IDictionary<string, Delegate> _methodsDictionary = new Dictionary<string, Delegate>();
-        private static readonly IDictionary<TypeKey, Type> TypeCache = new Dictionary<TypeKey, Type>();
+        private static readonly IDictionary<TypeKey, Func<object, object>> TypeCache = new Dictionary<TypeKey, Func<object, object>>();
 
         private class TypeKey
         {
@@ -68,7 +68,7 @@ namespace FunctionalCSharp
 
         static ObjectBuilder()
         {
-            SetupBuilderAndModule("Decorators");
+            SetupBuilderAndModule("DynamicObjects");
         }
 
         private ObjectBuilder()
@@ -96,11 +96,22 @@ namespace FunctionalCSharp
                                      info.GetGenericArguments().Select(t => t.FullName).Aggregate(
                                          (x, y) => String.Format("{0}{1}", x, y)));
             return name;
-        }
+        }       
 
-        public T Return<T>()
+        private Func<object, object> CreateDynamicConstructor()
         {
-            return (T)Activator.CreateInstance(CreateType<T>(), _methodsDictionary);
+            var methodDictType = _methodsDictionary.GetType();
+            var type = _typeBuilder.CreateType();
+            var dynamic = new DynamicMethod("CreateInstance",
+                                            typeof (object),
+                                            new[] {typeof (object)},
+                                            type);
+            var il = dynamic.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Castclass, methodDictType);
+            il.Emit(OpCodes.Newobj, type.GetConstructor(new[] {methodDictType}));
+            il.Emit(OpCodes.Ret);
+            return (Func<object, object>) dynamic.CreateDelegate(typeof (Func<object, object>));
         }
 
         private static void SetupBuilderAndModule(string moduleName)
@@ -110,7 +121,7 @@ namespace FunctionalCSharp
             _module = _assemblyBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
         }
 
-        private Type CreateType<T>()
+        public T Return<T>()
         {
             var typeKey = TypeKey.Create<T>(_methodsDictionary);
             if (!TypeCache.ContainsKey(typeKey))
@@ -118,10 +129,10 @@ namespace FunctionalCSharp
                 EmitEmptyType<T>();
                 EmitConstructor();
                 EmitMethods<T>();
-                TypeCache.Add(typeKey, _typeBuilder.CreateType());
+                TypeCache.Add(typeKey, CreateDynamicConstructor());
             }
 
-            return TypeCache[typeKey];
+            return (T)TypeCache[typeKey](_methodsDictionary);
         }
 
         private void EmitConstructor()
@@ -185,23 +196,75 @@ namespace FunctionalCSharp
         {
             var il = _methodBuilder.GetILGenerator();
             if (HasLambdaToDelegateTo(interfaceMethod))
-                DelegateToLambda(il, interfaceMethod);
+                CreateMethodBody(interfaceMethod, il);
             else
                 il.ThrowException(typeof (NotImplementedException));
         }
 
+        private void CreateMethodBody(MethodInfo interfaceMethod, ILGenerator il)
+        {
+            if (interfaceMethod.IsGenericMethod)
+                GenericMethodDelegateToLambda(il, interfaceMethod);
+            else
+                NonGenericMethodDelegateToLambda(il, interfaceMethod);
+        }
+
         private bool HasLambdaToDelegateTo(MethodInfo method)
         {
-            if (method.IsGenericMethod)
+            if (method.IsGenericMethod && _methodsDictionary.Count > 0 && _methodsDictionary.Keys.Any(s => s.StartsWith(method.Name)))
                 return true;
             return _methodsDictionary.ContainsKey(GetMethodKey(method, method.Name));
-        }       
+        }
 
-        private void DelegateToLambda(ILGenerator il, MethodInfo method)
+        private void NonGenericMethodDelegateToLambda(ILGenerator il, MethodBase method)
         {
-            var listLocal = il.DeclareLocal(typeof(List<object>));
-            var argsLocal = il.DeclareLocal(typeof(object[]));
-            il.Emit(OpCodes.Newobj, typeof(List<object>).GetConstructor(new Type[0]));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, _methodsField);
+            il.Emit(OpCodes.Ldstr, method.Name);
+            il.Emit(OpCodes.Callvirt, typeof(Dictionary<string, Delegate>).GetProperty("Item").GetGetMethod());
+
+            var funcType = _methodsDictionary[method.Name].GetType();
+            il.Emit(OpCodes.Castclass, funcType);
+
+            var parameters = method.GetParameters();
+            for (var i = 0; i < parameters.Length; i++)
+                il.Emit(OpCodes.Ldarg, i + 1);
+
+            il.Emit(OpCodes.Callvirt, funcType.GetMethod("Invoke"));
+            il.Emit(OpCodes.Ret);
+        }
+
+
+        private void GenericMethodDelegateToLambda(ILGenerator il, MethodInfo method)
+        {
+            var argsLocal = GenerateParametersListArg(il, method);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, _methodsField);
+            il.Emit(OpCodes.Ldstr, method.Name);
+
+            il.Emit(OpCodes.Ldtoken, method.GetGenericArguments()[0]);
+            il.Emit(OpCodes.Call, typeof (Type).GetMethod("GetTypeFromHandle"));
+            il.Emit(OpCodes.Callvirt, typeof (Type).GetProperty("FullName").GetGetMethod());
+            il.Emit(OpCodes.Call, typeof (string).GetMethod("Concat", new[] {typeof (string), typeof (string)}));
+
+            il.Emit(OpCodes.Callvirt, typeof (Dictionary<string, Delegate>).GetProperty("Item").GetGetMethod());
+
+            il.Emit(OpCodes.Ldloc, argsLocal);
+            il.Emit(OpCodes.Callvirt, typeof (Delegate).GetMethod("DynamicInvoke"));
+            if (method.ReturnType == typeof (void))
+                il.Emit(OpCodes.Pop);
+            else if (method.ReturnType.IsValueType || method.ReturnType.IsGenericParameter)
+                il.Emit(OpCodes.Unbox_Any, method.ReturnType);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static LocalBuilder GenerateParametersListArg(ILGenerator il, MethodInfo method)
+        {
+            var listLocal = il.DeclareLocal(typeof (List<object>));
+            var argsLocal = il.DeclareLocal(typeof (object[]));
+            il.Emit(OpCodes.Newobj, typeof (List<object>).GetConstructor(new Type[0]));
             il.Emit(OpCodes.Stloc, listLocal);
             var parameters = method.GetParameters();
             for (var i = 0; i < parameters.Length; i++)
@@ -210,32 +273,12 @@ namespace FunctionalCSharp
                 il.Emit(OpCodes.Ldarg, i + 1);
                 if (parameters[i].ParameterType.IsValueType)
                     il.Emit(OpCodes.Box, parameters[i].ParameterType);
-                il.Emit(OpCodes.Callvirt, typeof(List<object>).GetMethod("Add"));
+                il.Emit(OpCodes.Callvirt, typeof (List<object>).GetMethod("Add"));
             }
             il.Emit(OpCodes.Ldloc, listLocal);
-            il.Emit(OpCodes.Callvirt, typeof(List<object>).GetMethod("ToArray"));
+            il.Emit(OpCodes.Callvirt, typeof (List<object>).GetMethod("ToArray"));
             il.Emit(OpCodes.Stloc, argsLocal);
-
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldfld, _methodsField);
-            il.Emit(OpCodes.Ldstr, method.Name);
-            if (_methodBuilder.IsGenericMethod)
-            {
-                il.Emit(OpCodes.Ldtoken, method.GetGenericArguments()[0]);
-                il.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"));
-                il.Emit(OpCodes.Callvirt, typeof(Type).GetProperty("FullName").GetGetMethod());
-                il.Emit(OpCodes.Call, typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) }));
-            }
-            il.Emit(OpCodes.Callvirt, typeof(Dictionary<string, Delegate>).GetProperty("Item").GetGetMethod());
-
-            il.Emit(OpCodes.Ldloc, argsLocal);
-            il.Emit(OpCodes.Callvirt, typeof(Delegate).GetMethod("DynamicInvoke"));
-            if (method.ReturnType == typeof(void))
-                il.Emit(OpCodes.Pop);
-            else if (method.ReturnType.IsValueType || method.ReturnType.IsGenericParameter)
-                il.Emit(OpCodes.Unbox_Any, method.ReturnType);
-
-            il.Emit(OpCodes.Ret);
+            return argsLocal;
         }
 
         private void EmitEmptyType<T>()
