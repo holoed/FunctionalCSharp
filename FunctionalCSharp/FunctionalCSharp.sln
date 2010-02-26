@@ -1,14 +1,14 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharp", "FunctionalCSharp\FunctionalCSharp.csproj", "{DC55BA21-EEBF-4488-9ABA-BEA806EA9A07}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharpTests", "FunctionalCSharpTests\FunctionalCSharpTests.csproj", "{C5DACBFD-AF8B-4751-B235-25B67969AAD1}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{A0CD7C2E-7D6F-46DE-9FC7-104004F690C3}"
 	ProjectSection(SolutionItems) = preProject
 		License.htm = License.htm
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharp", "FunctionalCSharp\FunctionalCSharp.csproj", "{DC55BA21-EEBF-4488-9ABA-BEA806EA9A07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharpTests", "FunctionalCSharpTests\FunctionalCSharpTests.csproj", "{C5DACBFD-AF8B-4751-B235-25B67969AAD1}"
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
