@@ -21,7 +21,11 @@ namespace FunctionalCSharp.Parser
     {
         public static IParser<IEnumerable<char>, IEnumerable<string>> String()
         {
-            return CharParser.Word().AsString().SepBy(CharParser.Whitespace().Many1().AsString());
+            return CharParser.Word()
+                             .AsString()
+                             .SepBy(CharParser.Whitespace()
+                                              .Many1()
+                                              .AsString());
         }
     }
 }

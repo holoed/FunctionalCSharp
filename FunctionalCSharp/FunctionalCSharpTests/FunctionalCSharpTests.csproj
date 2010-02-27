@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Object Expression\ObjectExpressionTests.cs" />
+    <Compile Include="Parser\CalculatorTests.cs" />
     <Compile Include="Parser\CharParserTests.cs" />
     <Compile Include="Parser\ParserCombinatorsTests.cs" />
     <Compile Include="Parser\StringParserTests.cs" />

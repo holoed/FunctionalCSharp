@@ -42,6 +42,11 @@ namespace FunctionalCSharp.Parser
             return ParserCombinators.Sat<char>(Char.IsWhiteSpace);
         }
 
+        public static IParser<IEnumerable<char>, IEnumerable<char>> Whitespaces()
+        {
+            return Whitespace().Many();
+        }
+
         public static IParser<IEnumerable<char>, char> Digit()
         {
             return ParserCombinators.Sat<char>(Char.IsDigit);
@@ -62,7 +67,14 @@ namespace FunctionalCSharp.Parser
             return Digit().Many1();
         }
 
-        public static IEnumerable<T> ParseString<T>(this IParser<IEnumerable<char>, T> p, string input)
+        public static IParser<IEnumerable<char>, b> Token<b>(IParser<IEnumerable<char>, b> p)
+        {
+            return from x in p
+                   from y in Whitespaces()
+                   select x;
+        }
+
+        public static IEnumerable<T> Execute<T>(this IParser<IEnumerable<char>, T> p, string input)
         {
             return from x in p.Parse(input)
                    select x.Output;

@@ -86,5 +86,22 @@ namespace FunctionalCSharp.Parser
         {
             return SepBy1(p, sep).Or(ParserMonad.Return<IEnumerable<TA>, IEnumerable<TB>>(Enumerable.Empty<TB>()));
         }
+
+        public static IParser<IEnumerable<TA>, TB> Chainl1<TA, TB>(this IParser<IEnumerable<TA>, TB> p, IParser<IEnumerable<TA>, Func<TB, TB, TB>> op)
+        {
+            Func<TB, IParser<IEnumerable<TA>, TB>> rest = null;
+            rest = l => (from f in op
+                         from r in p
+                         from ret in rest(f(l, r))
+                         select ret).Or(ParserMonad.Return<IEnumerable<TA>, TB>(l));
+            return from l in p
+                   from ret in rest(l)
+                   select ret;
+        }
+
+        public static IParser<IEnumerable<TA>, TA> Chainl<TA>(this IParser<IEnumerable<TA>, TA> p, IParser<IEnumerable<TA>, Func<TA, TA, TA>> op, TA l)
+        {
+            return Chainl1(p, op).Or(ParserMonad.Return<IEnumerable<TA>, TA>(l));
+        }
     }
 }

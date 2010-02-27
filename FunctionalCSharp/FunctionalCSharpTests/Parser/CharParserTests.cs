@@ -24,43 +24,43 @@ namespace FunctionalCSharpTests.Parser
         [Test]
         public void Lower()
         {
-            CollectionAssert.AreEqual(new[] { 'h' }, CharParser.Lower().ParseString("hello"));
-            CollectionAssert.AreEqual(new char[0], CharParser.Lower().ParseString("Hello"));
+            CollectionAssert.AreEqual(new[] { 'h' }, CharParser.Lower().Execute("hello"));
+            CollectionAssert.AreEqual(new char[0], CharParser.Lower().Execute("Hello"));
         }
 
         [Test]
         public void Upper()
         {
-            CollectionAssert.AreEqual(new[] { 'H' }, CharParser.Upper().ParseString("Hello"));
-            CollectionAssert.AreEqual(new char[0], CharParser.Upper().ParseString("hello"));
+            CollectionAssert.AreEqual(new[] { 'H' }, CharParser.Upper().Execute("Hello"));
+            CollectionAssert.AreEqual(new char[0], CharParser.Upper().Execute("hello"));
         }
 
         [Test]
         public void Whitespace()
         {
-            CollectionAssert.AreEqual(new[] { ' ' }, CharParser.Whitespace().ParseString(" Hello"));
-            CollectionAssert.AreEqual(new char[0], CharParser.Whitespace().ParseString("Hello"));
+            CollectionAssert.AreEqual(new[] { ' ' }, CharParser.Whitespace().Execute(" Hello"));
+            CollectionAssert.AreEqual(new char[0], CharParser.Whitespace().Execute("Hello"));
         }
 
         [Test]
         public void Letter()
         {
-            CollectionAssert.AreEqual(new[] { 'H' }, CharParser.Letter().ParseString("Hello"));
-            CollectionAssert.AreEqual(new char[0], CharParser.Letter().ParseString("1234"));
+            CollectionAssert.AreEqual(new[] { 'H' }, CharParser.Letter().Execute("Hello"));
+            CollectionAssert.AreEqual(new char[0], CharParser.Letter().Execute("1234"));
         }
 
         [Test]
         public void Word()
         {
-            CollectionAssert.AreEqual(new[] { "Hello" }, CharParser.Word().ParseString("Hello Word"));
-            CollectionAssert.AreEqual(new string[0], CharParser.Word().ParseString("1234"));
+            CollectionAssert.AreEqual(new[] { "Hello" }, CharParser.Word().Execute("Hello Word"));
+            CollectionAssert.AreEqual(new string[0], CharParser.Word().Execute("1234"));
         }
 
         [Test]
         public void Number()
         {
-            CollectionAssert.AreEqual(new[] { "123" }, CharParser.Number().ParseString("123 456"));
-            CollectionAssert.AreEqual(new string[0], CharParser.Number().ParseString("Hello World"));
+            CollectionAssert.AreEqual(new[] { "123" }, CharParser.Number().Execute("123 456"));
+            CollectionAssert.AreEqual(new string[0], CharParser.Number().Execute("Hello World"));
         }    
     }
 }
