@@ -14,6 +14,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using FunctionalCSharp.Parser;
 using NUnit.Framework;
 
@@ -25,32 +26,32 @@ namespace FunctionalCSharpTests.Parser
         [Test]
         public void Item()
         {
-            CollectionAssert.AreEqual(new[] { 'H' }, ParserCombinators.Item<char>().ParseString("Hello"));
-            CollectionAssert.AreEqual(new[] { '1' }, ParserCombinators.Item<char>().ParseString("1234"));
+            CollectionAssert.AreEqual(new[] { 'H' }, ParserCombinators.Item<char>().Execute("Hello"));
+            CollectionAssert.AreEqual(new[] { '1' }, ParserCombinators.Item<char>().Execute("1234"));
         }
 
         [Test]
         public void Sat()
         {
-            CollectionAssert.AreEqual(new char[0], ParserCombinators.Sat<char>(c => c == 'X').ParseString("Hello"));
-            CollectionAssert.AreEqual(new[] { 'H' }, ParserCombinators.Sat<char>(c => c == 'H').ParseString("Hello"));
-            CollectionAssert.AreEqual(new[] { '1' }, ParserCombinators.Sat<char>(c => c == '1').ParseString("1234"));
+            CollectionAssert.AreEqual(new char[0], ParserCombinators.Sat<char>(c => c == 'X').Execute("Hello"));
+            CollectionAssert.AreEqual(new[] { 'H' }, ParserCombinators.Sat<char>(c => c == 'H').Execute("Hello"));
+            CollectionAssert.AreEqual(new[] { '1' }, ParserCombinators.Sat<char>(c => c == '1').Execute("1234"));
         }
 
         [Test]
         public void Or()
         {
             var parser = ParserCombinators.Sat<char>(c => c == '1').Or(ParserCombinators.Sat<char>(c => c == '2'));
-            CollectionAssert.AreEqual(new[] { '1' }, parser.ParseString("1234"));
-            CollectionAssert.AreEqual(new[] { '2' }, parser.ParseString("2345"));
+            CollectionAssert.AreEqual(new[] { '1' }, parser.Execute("1234"));
+            CollectionAssert.AreEqual(new[] { '2' }, parser.Execute("2345"));
         }
 
         [Test]
         public void Many()
         {
             var parser = ParserCombinators.Item<char>().Many().AsString();
-            CollectionAssert.AreEqual(new[] { "Hello World" }, parser.ParseString("Hello World"));
-            CollectionAssert.AreEqual(new[] {""}, parser.ParseString(""));            
+            CollectionAssert.AreEqual(new[] { "Hello World" }, parser.Execute("Hello World"));
+            CollectionAssert.AreEqual(new[] {""}, parser.Execute(""));            
         }
 
         [Test]
@@ -58,7 +59,16 @@ namespace FunctionalCSharpTests.Parser
         {
             var parser = ParserCombinators.Sat<char>(Char.IsLetter).SepBy(
                 ParserCombinators.Sat<char>(Char.IsWhiteSpace));
-            CollectionAssert.AreEqual(new[]{ new[]{'H', 'e', 'l', 'l', 'o'} }, parser.ParseString("H e l l o")); 
+            CollectionAssert.AreEqual(new[]{ new[]{'H', 'e', 'l', 'l', 'o'} }, parser.Execute("H e l l o")); 
+        }
+
+        [Test]
+        public void Chainl1()
+        {
+            Func<string, string, string> f = (x, y) => String.Format("({0}{1})",x,y);
+            var parser = ParserCombinators.Sat<char>(Char.IsLetter).Many().AsString().Chainl1(
+                         ParserCombinators.Sat<char>(Char.IsWhiteSpace).Select(_ => f));
+            CollectionAssert.AreEqual(new[] { "((((He)l)l)o)" }, parser.Execute("H e l l o"));
         }
     }
 }

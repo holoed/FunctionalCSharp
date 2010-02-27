@@ -70,6 +70,7 @@
     <Compile Include="Object Expression\ObjectBuilder.cs" />
     <Compile Include="Object Expression\ObjectExpression.cs" />
     <Compile Include="Object Expression\ObjectBuilderExtensions.cs" />
+    <Compile Include="Parser\CalculatorCombinators.cs" />
     <Compile Include="Parser\CharParser.cs" />
     <Compile Include="Parser\EnumerableExtensions.cs" />
     <Compile Include="Parser\IParser.cs" />

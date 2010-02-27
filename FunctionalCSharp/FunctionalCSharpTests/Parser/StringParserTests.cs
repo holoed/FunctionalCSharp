@@ -27,7 +27,7 @@ namespace FunctionalCSharpTests.Parser
         {
             CollectionAssert.AreEqual
                 (new[] {"Welcome", "to", "the", "real", "world"},
-                 StringParser.String().ParseString("Welcome to the real world").First());
+                 StringParser.String().Execute("Welcome to the real world").First());
         }
     }
 }
