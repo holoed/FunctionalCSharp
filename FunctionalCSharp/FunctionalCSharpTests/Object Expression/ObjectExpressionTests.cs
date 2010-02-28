@@ -17,6 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using FunctionalCSharp;
 using FunctionalCSharp.Tuples;
 using NUnit.Framework;
@@ -182,6 +183,21 @@ namespace FunctionalCSharpTests
 
             Assert.AreEqual("Hello", list.Values.Aggregate((x, y) => x + y));                
         }
+
+        [Test]
+        public void AnonymousTypeParameter()
+        {
+            var foo = CreateAnonymous(new {Name="JohnDoe"});
+            Assert.IsNotNull(foo);
+        }
+
+        public static IFoo<T> CreateAnonymous<T>(T t)
+        {
+            return ObjectExpression.New<IFoo<T>>().Return();
+        }
+
+        public interface IFoo<T>
+        {}
 
         public interface IoC_Container
         {

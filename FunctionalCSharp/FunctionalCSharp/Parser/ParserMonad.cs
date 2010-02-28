@@ -41,32 +41,15 @@ namespace FunctionalCSharp.Parser
 
         public static IParser<TA, TD> SelectMany<TA, TB, TC, TD>(this IParser<TA, TB> m, Func<TB, IParser<TA, TC>> f, Func<TB, TC, TD> p)
         {
-            return new SelectManyImpl<TA, TB, TC, TD>(m, f, p);
+            return ObjectExpression
+                .New<IParser<TA, TD>>()
+                .With(o => o.Parse, (TA input) => 
+                    m.Parse(input)
+                     .Select(x => f(x.Output).Parse(x.Rest)
+                                             .Select(y => ParseResult.Create(y.Rest, p(x.Output, y.Output))))
+                     .Aggregate(Enumerable.Empty<ParseResult<TA, TD>>(), (x, y) => x.Concat(y)))
+                .Return();
         }
-
-        private class SelectManyImpl<TA, TB, TC, TD>: IParser<TA, TD>
-        {
-            private readonly IParser<TA, TB> _m;
-            private readonly Func<TB, IParser<TA, TC>> _f;
-            private readonly Func<TB, TC, TD> _p;
-
-            public SelectManyImpl(IParser<TA, TB> m, Func<TB, IParser<TA, TC>> f, Func<TB, TC, TD> p)
-            {
-                _m = m;
-                _f = f;
-                _p = p;
-            }
-
-            public IEnumerable<ParseResult<TA, TD>> Parse(TA input)
-            {
-                return _m.Parse(input)
-                    .Select(x => _f(x.Output)
-                                     .Parse(x.Rest)
-                                     .Select(y => ParseResult.Create(y.Rest, _p(x.Output, y.Output))))
-                    .Aggregate(Enumerable.Empty<ParseResult<TA, TD>>(), (x, y) => x.Concat(y));
-            }
-        }
-
 
         public static IParser<TA, TB> Where<TA, TB>(this IParser<TA, TB> m, Predicate<TB> p)
         {
