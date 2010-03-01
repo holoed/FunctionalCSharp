@@ -10,9 +10,60 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharp", "Functio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionalCSharpTests", "FunctionalCSharpTests\FunctionalCSharpTests.csproj", "{C5DACBFD-AF8B-4751-B235-25B67969AAD1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdParty", "ThirdParty", "{23B4E91E-A90F-47AB-8172-72664D898C7D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FsCheck", "FsCheck", "{8A32BCF5-3B7A-4683-AD35-89D5BA37FA77}"
+	ProjectSection(SolutionItems) = preProject
+		ThirdParty\FSCheck\Contributors.txt = ThirdParty\FSCheck\Contributors.txt
+		ThirdParty\FSCheck\FsCheck.dll = ThirdParty\FSCheck\FsCheck.dll
+		ThirdParty\FSCheck\FsCheck.pdb = ThirdParty\FSCheck\FsCheck.pdb
+		ThirdParty\FSCheck\FsCheck.XML = ThirdParty\FSCheck\FsCheck.XML
+		ThirdParty\FSCheck\License.txt = ThirdParty\FSCheck\License.txt
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NUnitRunner", "NUnitRunner\NUnitRunner.fsproj", "{6937549F-FF4D-4329-8D70-6D8257FD94A9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NUnit", "NUnit", "{37D69252-CF14-40D4-A976-59F868B53A8F}"
+	ProjectSection(SolutionItems) = preProject
+		ThirdParty\NUnit\agent.conf = ThirdParty\NUnit\agent.conf
+		ThirdParty\NUnit\agent.log.conf = ThirdParty\NUnit\agent.log.conf
+		ThirdParty\NUnit\launcher.log.conf = ThirdParty\NUnit\launcher.log.conf
+		ThirdParty\NUnit\license.rtf = ThirdParty\NUnit\license.rtf
+		ThirdParty\NUnit\license.txt = ThirdParty\NUnit\license.txt
+		ThirdParty\NUnit\log4net.dll = ThirdParty\NUnit\log4net.dll
+		ThirdParty\NUnit\nunit - Copy.exe = ThirdParty\NUnit\nunit - Copy.exe
+		ThirdParty\NUnit\nunit-agent.exe = ThirdParty\NUnit\nunit-agent.exe
+		ThirdParty\NUnit\nunit-agent.exe.config = ThirdParty\NUnit\nunit-agent.exe.config
+		ThirdParty\NUnit\nunit-agent.pdb = ThirdParty\NUnit\nunit-agent.pdb
+		ThirdParty\NUnit\nunit-console.exe = ThirdParty\NUnit\nunit-console.exe
+		ThirdParty\NUnit\nunit-console.exe.config = ThirdParty\NUnit\nunit-console.exe.config
+		ThirdParty\NUnit\nunit-console.pdb = ThirdParty\NUnit\nunit-console.pdb
+		ThirdParty\NUnit\nunit-server.exe = ThirdParty\NUnit\nunit-server.exe
+		ThirdParty\NUnit\nunit-server.pdb = ThirdParty\NUnit\nunit-server.pdb
+		ThirdParty\NUnit\nunit.exe = ThirdParty\NUnit\nunit.exe
+		ThirdParty\NUnit\nunit.exe.config = ThirdParty\NUnit\nunit.exe.config
+		ThirdParty\NUnit\nunit.framework.dll = ThirdParty\NUnit\nunit.framework.dll
+		ThirdParty\NUnit\nunit.framework.pdb = ThirdParty\NUnit\nunit.framework.pdb
+		ThirdParty\NUnit\nunit.framework.xml = ThirdParty\NUnit\nunit.framework.xml
+		ThirdParty\NUnit\nunit.pdb = ThirdParty\NUnit\nunit.pdb
+		ThirdParty\NUnit\nunit.vshost.exe = ThirdParty\NUnit\nunit.vshost.exe
+		ThirdParty\NUnit\nunit.vshost.exe.config = ThirdParty\NUnit\nunit.vshost.exe.config
+		ThirdParty\NUnit\pnunit-agent.exe = ThirdParty\NUnit\pnunit-agent.exe
+		ThirdParty\NUnit\pnunit-agent.exe.config = ThirdParty\NUnit\pnunit-agent.exe.config
+		ThirdParty\NUnit\pnunit-agent.pdb = ThirdParty\NUnit\pnunit-agent.pdb
+		ThirdParty\NUnit\pnunit-launcher.exe = ThirdParty\NUnit\pnunit-launcher.exe
+		ThirdParty\NUnit\pnunit-launcher.exe.config = ThirdParty\NUnit\pnunit-launcher.exe.config
+		ThirdParty\NUnit\pnunit-launcher.pdb = ThirdParty\NUnit\pnunit-launcher.pdb
+		ThirdParty\NUnit\pnunit.framework.dll = ThirdParty\NUnit\pnunit.framework.dll
+		ThirdParty\NUnit\pnunit.framework.pdb = ThirdParty\NUnit\pnunit.framework.pdb
+		ThirdParty\NUnit\pnunit.tests.dll = ThirdParty\NUnit\pnunit.tests.dll
+		ThirdParty\NUnit\pnunit.tests.pdb = ThirdParty\NUnit\pnunit.tests.pdb
+		ThirdParty\NUnit\test.conf = ThirdParty\NUnit\test.conf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
+		SccNumberOfProjects = 4
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs09.codeplex.com/
 		SccLocalPath0 = .
@@ -22,6 +73,9 @@ Global
 		SccProjectUniqueName2 = FunctionalCSharpTests\\FunctionalCSharpTests.csproj
 		SccProjectName2 = FunctionalCSharpTests
 		SccLocalPath2 = FunctionalCSharpTests
+		SccProjectUniqueName3 = NUnitRunner\\NUnitRunner.fsproj
+		SccProjectName3 = NUnitRunner
+		SccLocalPath3 = NUnitRunner
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,8 +90,16 @@ Global
 		{C5DACBFD-AF8B-4751-B235-25B67969AAD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5DACBFD-AF8B-4751-B235-25B67969AAD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5DACBFD-AF8B-4751-B235-25B67969AAD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6937549F-FF4D-4329-8D70-6D8257FD94A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6937549F-FF4D-4329-8D70-6D8257FD94A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6937549F-FF4D-4329-8D70-6D8257FD94A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6937549F-FF4D-4329-8D70-6D8257FD94A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8A32BCF5-3B7A-4683-AD35-89D5BA37FA77} = {23B4E91E-A90F-47AB-8172-72664D898C7D}
+		{37D69252-CF14-40D4-A976-59F868B53A8F} = {23B4E91E-A90F-47AB-8172-72664D898C7D}
 	EndGlobalSection
 EndGlobal

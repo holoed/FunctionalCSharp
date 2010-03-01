@@ -13,9 +13,11 @@
 
 #endregion
 
-using System.Collections.Generic;
+using System;
+using System.Linq;
 using FunctionalCSharp.Parser;
 using NUnit.Framework;
+using FsCheck;
 
 namespace FunctionalCSharpTests.Parser
 {
@@ -23,58 +25,53 @@ namespace FunctionalCSharpTests.Parser
     public class CalculatorTests
     {
         [Test]
-        public void Add()
+        public void IdentityElement()
         {
-            var expected = new[] { "5" };
-            CollectionAssert.AreEqual(expected, Calculate("2+3"));
-            CollectionAssert.AreEqual(expected, Calculate("2 +3"));
-            CollectionAssert.AreEqual(expected, Calculate("2+ 3"));
-            CollectionAssert.AreEqual(expected, Calculate("2 + 3"));
+            QuickCheck(valueOf => valueOf("0 + {1}") == valueOf("{1} + 0"));
+            QuickCheck(valueOf => valueOf("1 * {1}") == valueOf("{1} * 1"));     
         }
 
         [Test]
-        public void Sub()
+        public void Commutativity()
         {
-            CollectionAssert.AreEqual(new[] { "-1" }, Calculate("2-3"));
-            CollectionAssert.AreEqual(new[] { "-1" }, Calculate("2 - 3"));
-            CollectionAssert.AreEqual(new[] { "-1" }, Calculate("2  - 3"));
-            CollectionAssert.AreEqual(new[] { "-1" }, Calculate("2 -  3"));
+            QuickCheck(valueOf => valueOf("{0} + {1}") == valueOf("{1} + {0}"));
+            QuickCheck(valueOf => valueOf("{0} * {1}") == valueOf("{1} * {0}"));
+            QuickCheck(valueOf => valueOf("{0} - {1}") != valueOf("{1} - {0}"));            
         }
 
         [Test]
-        public void Div()
+        public void Associativity()
         {
-            CollectionAssert.AreEqual(new[] { "3" }, Calculate("9/3"));
-            CollectionAssert.AreEqual(new[] { "3" }, Calculate("9 /3"));
-            CollectionAssert.AreEqual(new[] { "3" }, Calculate("9/ 3"));
-            CollectionAssert.AreEqual(new[] { "3" }, Calculate("9   / 3"));
+            QuickCheck(valueOf => valueOf("{0} + ( {1} + {2} )") == valueOf("( {0} + {1} ) + {2}"));
+            QuickCheck(valueOf => valueOf("{0} * ( {1} * {2} )") == valueOf("( {0} * {1} ) * {2}"));
+            QuickCheck(valueOf => valueOf("{0} - ( {1} - {2} )") != valueOf("( {0} - {1} ) - {2}"));            
         }
 
         [Test]
-        public void Mul()
+        public void Distributivity()
         {
-            CollectionAssert.AreEqual(new[] { "27" }, Calculate("9*3"));
-            CollectionAssert.AreEqual(new[] { "27" }, Calculate("9  *3"));
-            CollectionAssert.AreEqual(new[] { "27" }, Calculate("9* 3"));
-            CollectionAssert.AreEqual(new[] { "27" }, Calculate("9 * 3"));
+            QuickCheck(valueOf => valueOf("{0} * ( {1} + {2} )") == valueOf("{0} * {1} + {0} * {2}"));
+            QuickCheck(valueOf => valueOf("{0} * ( {1} + {2} )") == valueOf("{0} * {1} + {0} * {2}"));
         }
 
-        [Test]
-        public void AddMul()
+        private static void QuickCheck(Func<Func<string, int>, bool> property)
         {
-            CollectionAssert.AreEqual(new[] { "29" }, Calculate("2+9*3"));
-            CollectionAssert.AreEqual(new[] { "21" }, Calculate("2 * 9 + 3"));
+            Spec.ForAny(Calculate(property)).Check(new Configuration {Runner = FsNUnit.Runner});
         }
 
-        [Test]
-        public void AddMulDivSub()
+        private static Func<int, bool> Calculate(Func<Func<string, int>, bool> check)
         {
-            CollectionAssert.AreEqual(new[] { "9" }, Calculate("3 + 4 * 2 - 4 / 2"));
+            return x =>
+            {
+                var rnd = new System.Random(x);
+                var xs = Enumerable.Range(0, 10).Select(_ => rnd.Next(100)).ToArray();
+                return check(exp => Calculate(String.Format(exp, xs.Cast<object>().ToArray())));
+            };
         }
 
-        private static IEnumerable<string> Calculate(string exp)
+        private static int Calculate(string exp)
         {
-            return CalculatorCombinators.Calculator().Execute(exp);
+            return  CalculatorCombinators.Calculator().Execute(exp).First();            
         }
     }
 }
