@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FunctionalCSharpTests</RootNamespace>
     <AssemblyName>FunctionalCSharpTests</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
@@ -35,6 +35,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -56,7 +57,13 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework, Version=2.5.0.9015, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL" />
+    <Reference Include="FsCheck">
+      <HintPath>..\ThirdParty\FSCheck\FsCheck.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.5.0.9122, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ThirdParty\NUnit\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -75,12 +82,15 @@
     <Compile Include="Pattern Matching\ActivePatternsTests.cs" />
     <Compile Include="Pattern Matching\PatternMatchingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tuples\TupleTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FunctionalCSharp\FunctionalCSharp.csproj">
       <Project>{DC55BA21-EEBF-4488-9ABA-BEA806EA9A07}</Project>
       <Name>FunctionalCSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NUnitRunner\NUnitRunner.fsproj">
+      <Project>{6937549F-FF4D-4329-8D70-6D8257FD94A9}</Project>
+      <Name>NUnitRunner</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

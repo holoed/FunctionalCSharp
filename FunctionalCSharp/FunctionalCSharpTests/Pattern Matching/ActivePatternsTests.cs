@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using FunctionalCSharp;
-using FunctionalCSharp.Tuples;
 using NUnit.Framework;
 
 namespace FunctionalCSharpTests
@@ -151,7 +150,7 @@ namespace FunctionalCSharpTests
         [Test]
         public void MatchTuples()
         {
-            var value = Tuple.New(42, "Hello");
+            var value = Tuple.Create(42, "Hello");
             Assert.AreEqual(42, value.Match()
                                      .Tuple((x, _) => x)
                                      .Return<int>());
@@ -163,7 +162,7 @@ namespace FunctionalCSharpTests
         [Test]
         public void MatchTuples3()
         {
-            var value = Tuple.New(42, "Hello", new DateTime());
+            var value = Tuple.Create(42, "Hello", new DateTime());
             Assert.AreEqual(42, value.Match()
                                      .Tuple((x, y, z) => x)
                                      .Return<int>());

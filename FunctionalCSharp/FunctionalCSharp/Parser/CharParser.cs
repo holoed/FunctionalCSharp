@@ -52,6 +52,11 @@ namespace FunctionalCSharp.Parser
             return ParserCombinators.Sat<char>(Char.IsDigit);
         }
 
+        public static IParser<IEnumerable<char>, char> Symbol()
+        {
+            return ParserCombinators.Sat<char>(Char.IsPunctuation);
+        }
+
         public static IParser<IEnumerable<char>, char> Letter()
         {
             return Lower().Or(Upper());
@@ -72,6 +77,24 @@ namespace FunctionalCSharp.Parser
             return from x in p
                    from y in Whitespaces()
                    select x;
+        }
+
+        public static IParser<IEnumerable<char>, char> Symbol(char symbol)
+        {
+            return from x in Symbol()
+                   where x == symbol
+                   select x;
+        }
+
+        public static IParser<IEnumerable<char>, int> Integer()
+        {
+            Func<int, int> negate = x => -x;
+            var op = (from _ in ParserCombinators.Sat<char>(c => c == '-')
+                      select negate).Or(ParserMonad.Return<IEnumerable<char>, Func<int, int>>(x => x));
+
+            return from f in op
+                   from n in Number().AsString()
+                   select f(Int32.Parse(n));
         }
 
         public static IEnumerable<T> Execute<T>(this IParser<IEnumerable<char>, T> p, string input)

@@ -17,9 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using FunctionalCSharp;
-using FunctionalCSharp.Tuples;
 using NUnit.Framework;
 
 namespace FunctionalCSharpTests
@@ -76,10 +74,10 @@ namespace FunctionalCSharpTests
         {         
             Tuple<int, string> result = null;
             var foo = ObjectExpression.New<IDictionary<int, string>>()
-                                      .With(o => o.Add, (int key, string value) => { result = Tuple.New(key, value); })
+                                      .With(o => o.Add, (int key, string value) => { result = Tuple.Create(key, value); })
                                       .Return();
             foo.Add(42, "Hello");
-            Assert.AreEqual(Tuple.New(42, "Hello"), result);
+            Assert.AreEqual(Tuple.Create(42, "Hello"), result);
         }
 
         [Test]

@@ -20,26 +20,35 @@ namespace FunctionalCSharp.Parser
 {
     public static class CalculatorCombinators
     {
-        public static IParser<IEnumerable<char>, string> Calculator()
+        public static IParser<IEnumerable<char>, int> Calculator()
         {
-            var addOp = CharParser.Token(ParserCombinators.Sat<char>(c => c == '+'))
-                        .Select(_ => Calc((x, y) => x + y));
-            var subOp = CharParser.Token(ParserCombinators.Sat<char>(c => c == '-'))
-                        .Select(_ => Calc((x, y) => x - y));
-            var mulOp = CharParser.Token(ParserCombinators.Sat<char>(c => c == '*'))
-                        .Select(_ => Calc((x, y) => x * y));
-            var divOp = CharParser.Token(ParserCombinators.Sat<char>(c => c == '/'))
-                        .Select(_ => Calc((x, y) => x / y));
+            var addOp = OpParser('+', (x, y) => x + y);
+            var subOp = OpParser('-', (x, y) => x - y);
+            var mulOp = OpParser('*', (x, y) => x * y);
+            var divOp = OpParser('/', (x, y) => x / y);
 
-            var factor = CharParser.Token(CharParser.Number()).AsString();
+            IParser<IEnumerable<char>, int> expr = null;
+
+            var factor =
+                Integer().Or(
+                    from l in CharParser.Token(CharParser.Symbol('('))
+                    from n in expr
+                    from r in CharParser.Token(CharParser.Symbol(')'))
+                    select n);
+
             var term = factor.Chainl1(mulOp.Or(divOp));
-            var exps = term.Chainl1(addOp.Or(subOp));
-            return exps;
+            expr = term.Chainl1(addOp.Or(subOp));
+            return expr;
         }
 
-        private static Func<string, string, string> Calc(Func<int, int, int> f)
+        private static IParser<IEnumerable<char>, int> Integer()
         {
-            return (lc, rc) => f(Int32.Parse(lc), Int32.Parse(rc)).ToString();
-        }     
+            return CharParser.Token(CharParser.Integer());
+        }
+
+        private static IParser<IEnumerable<char>, Func<int, int, int>> OpParser(char op, Func<int, int, int> calc)
+        {
+            return CharParser.Token(ParserCombinators.Sat<char>(c => c == op)).Select(_ => calc);
+        }
     }
 }

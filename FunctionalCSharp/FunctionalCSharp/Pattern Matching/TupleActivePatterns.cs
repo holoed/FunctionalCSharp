@@ -14,7 +14,6 @@
 #endregion
 
 using System;
-using FunctionalCSharp.Tuples;
 
 namespace FunctionalCSharp
 {
@@ -22,12 +21,12 @@ namespace FunctionalCSharp
     {
         public static PatternMatching<Tuple<T1,T2>> Tuple<T1,T2,TRet>(this PatternMatching<Tuple<T1,T2>> x, Func<T1,T2,TRet> action)
         {
-            return x.With<Tuple<T1, T2>>(pair => action(pair.First, pair.Second));
+            return x.With<Tuple<T1, T2>>(pair => action(pair.Item1, pair.Item2));
         }
 
-        public static PatternMatching<Tuple<T1, Tuple<T2, T3>>> Tuple<T1, T2, T3, TRet>(this PatternMatching<Tuple<T1, Tuple<T2, T3>>> x, Func<T1, T2, T3, TRet> action)
+        public static PatternMatching<Tuple<T1, T2, T3>> Tuple<T1, T2, T3, TRet>(this PatternMatching<Tuple<T1, T2, T3>> x, Func<T1, T2, T3, TRet> action)
         {
-            return x.With<Tuple<T1, Tuple<T2, T3>>>(pair => action(pair.First, pair.Second.First, pair.Second.Second));
+            return x.With<Tuple<T1, T2, T3>>(pair => action(pair.Item1, pair.Item2, pair.Item3));
         }
     }
 }
