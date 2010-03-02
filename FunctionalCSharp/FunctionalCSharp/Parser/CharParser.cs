@@ -89,7 +89,7 @@ namespace FunctionalCSharp.Parser
         public static IParser<IEnumerable<char>, int> Integer()
         {
             Func<int, int> negate = x => -x;
-            var op = (from _ in ParserCombinators.Sat<char>(c => c == '-')
+            var op = (from _ in Symbol('-')
                       select negate).Or(ParserMonad.Return<IEnumerable<char>, Func<int, int>>(x => x));
 
             return from f in op
@@ -97,7 +97,7 @@ namespace FunctionalCSharp.Parser
                    select f(Int32.Parse(n));
         }
 
-        public static IEnumerable<T> Execute<T>(this IParser<IEnumerable<char>, T> p, string input)
+        public static IEnumerable<T> Execute<T>(this IParser<IEnumerable<char>, T> p, IEnumerable<char> input)
         {
             return from x in p.Parse(input)
                    select x.Output;

@@ -54,9 +54,15 @@ namespace FunctionalCSharpTests.Parser
             QuickCheck(valueOf => valueOf("{0} * ( {1} + {2} )") == valueOf("{0} * {1} + {0} * {2}"));
         }
 
+        [Test]
+        public void SquareIsNeverNegative()
+        {
+            QuickCheck(valueOf => valueOf("{0} * {1}") >= 0);         
+        }
+
         private static void QuickCheck(Func<Func<string, int>, bool> property)
         {
-            Spec.ForAny(Calculate(property)).Check(new Configuration {Runner = FsNUnit.Runner});
+            Spec.ForAny(Calculate(property)).Check(FsNUnit.Config);
         }
 
         private static Func<int, bool> Calculate(Func<Func<string, int>, bool> check)

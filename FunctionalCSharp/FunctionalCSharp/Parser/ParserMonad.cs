@@ -14,7 +14,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace FunctionalCSharp.Parser
@@ -29,15 +28,14 @@ namespace FunctionalCSharp.Parser
                 .Return();
         }
 
-
         public static IParser<TA, TC> Select<TA, TB, TC>(this IParser<TA, TB> m, Func<TB, TC> selector)
         {
             return ObjectExpression
                 .New<IParser<TA, TC>>()
-                .With(o => o.Parse, (TA input) => m.Parse(input).Select(x => ParseResult.Create(x.Rest, selector(x.Output))))
+                .With(o => o.Parse, (TA input) => m.Parse(input)
+                                                   .Select(x => ParseResult.Create(x.Rest, selector(x.Output))))
                 .Return();
         }
-
 
         public static IParser<TA, TD> SelectMany<TA, TB, TC, TD>(this IParser<TA, TB> m, Func<TB, IParser<TA, TC>> f, Func<TB, TC, TD> p)
         {
@@ -56,7 +54,15 @@ namespace FunctionalCSharp.Parser
             return ObjectExpression
                 .New<IParser<TA, TB>>()
                 .With(o => o.Parse, (TA input) => m.Parse(input)
-                                                     .Where(xi => p(xi.Output)))
+                                                   .Where(xi => p(xi.Output)))
+                .Return();
+        }
+
+        public static IParser<TA, TB> Fail<TA, TB>()
+        {
+            return ObjectExpression
+                .New<IParser<TA, TB>>()
+                .With(o => o.Parse, (TA input) => Enumerable.Empty<ParseResult<TA, TB>>())
                 .Return();
         }
     }

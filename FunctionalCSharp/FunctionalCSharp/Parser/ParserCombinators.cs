@@ -25,18 +25,9 @@ namespace FunctionalCSharp.Parser
         {
             return ObjectExpression
                 .New<IParser<IEnumerable<TA>, TA>>()
-                .With(o => o.Parse,
-                      (IEnumerable<TA> input) => ItemResult(input))
+                .With(o => o.Parse, (IEnumerable<TA> input) => input.Any() ? ParseResult.Create(input).Return() :
+                                                                             Enumerable.Empty<ParseResult<IEnumerable<TA>, TA>>())
                 .Return();
-        }
-
-        private static IEnumerable<ParseResult<IEnumerable<TA>, TA>> ItemResult<TA>(IEnumerable<TA> input)
-        {
-            foreach (var _ in input)
-            {
-                yield return ParseResult.Create(input);
-                yield break;
-            }
         }
 
         public static IParser<IEnumerable<TA>, TA> Sat<TA>(Predicate<TA> p)
@@ -71,7 +62,7 @@ namespace FunctionalCSharp.Parser
             return Many1(p).Or(ParserMonad.Return<IEnumerable<TA>, IEnumerable<TB>>(Enumerable.Empty<TB>()));
         }
 
-        public static IParser<IEnumerable<a>, IEnumerable<b>> SepBy1<a, b>(this IParser<IEnumerable<a>, b> p, IParser<IEnumerable<a>, b> sep)
+        public static IParser<IEnumerable<TA>, IEnumerable<TB>> SepBy1<TA, TB>(this IParser<IEnumerable<TA>, TB> p, IParser<IEnumerable<TA>, TB> sep)
         {
             var q = from _ in sep
                     from y in p

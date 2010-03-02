@@ -13,6 +13,8 @@
 
 #endregion
 
+using System.Linq;
+using FsCheck;
 using FunctionalCSharp.Parser;
 using NUnit.Framework;
 
@@ -61,6 +63,12 @@ namespace FunctionalCSharpTests.Parser
         {
             CollectionAssert.AreEqual(new[] { "123" }, CharParser.Number().Execute("123 456"));
             CollectionAssert.AreEqual(new string[0], CharParser.Number().Execute("Hello World"));
+        }
+
+        [Test]
+        public void Integer()
+        {
+            Spec.ForAny<int>(x => CharParser.Integer().Execute(x.ToString()).First() == x).Check(FsNUnit.Config);
         }    
     }
 }
