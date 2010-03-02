@@ -6,7 +6,7 @@ open System
 open FsCheck
 open NUnit.Framework
 
-let Runner = 
+let private Runner = 
     { new IRunner with
        member x.OnArguments (ntest,args, every) = ()
        member x.OnShrink(args, everyShrink) = ()
@@ -20,4 +20,7 @@ let Runner =
     }
 
 
-
+let Config =
+    let config = new Configuration()
+    config.Runner <- Runner
+    config

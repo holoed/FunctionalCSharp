@@ -29,16 +29,18 @@ namespace FunctionalCSharp.Parser
 
             IParser<IEnumerable<char>, int> expr = null;
 
-            var factor =
-                Integer().Or(
-                    from l in CharParser.Token(CharParser.Symbol('('))
-                    from n in expr
-                    from r in CharParser.Token(CharParser.Symbol(')'))
-                    select n);
-
+            var factor = Integer().Or(InParenthesis(() => expr));
             var term = factor.Chainl1(mulOp.Or(divOp));
             expr = term.Chainl1(addOp.Or(subOp));
             return expr;
+        }
+
+        private static IParser<IEnumerable<char>, int> InParenthesis(Func<IParser<IEnumerable<char>, int>> expr)
+        {
+            return from l in CharParser.Token(CharParser.Symbol('('))
+                   from n in expr()
+                   from r in CharParser.Token(CharParser.Symbol(')'))
+                   select n;
         }
 
         private static IParser<IEnumerable<char>, int> Integer()
