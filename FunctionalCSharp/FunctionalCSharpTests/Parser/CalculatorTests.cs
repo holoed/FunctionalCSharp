@@ -14,6 +14,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using FunctionalCSharp.Parser;
 using NUnit.Framework;
@@ -35,8 +36,7 @@ namespace FunctionalCSharpTests.Parser
         public void Commutativity()
         {
             QuickCheck(valueOf => valueOf("{0} + {1}") == valueOf("{1} + {0}"));
-            QuickCheck(valueOf => valueOf("{0} * {1}") == valueOf("{1} * {0}"));
-            QuickCheck(valueOf => valueOf("{0} - {1}") != valueOf("{1} - {0}"));            
+            QuickCheck(valueOf => valueOf("{0} * {1}") == valueOf("{1} * {0}"));          
         }
 
         [Test]
@@ -44,7 +44,6 @@ namespace FunctionalCSharpTests.Parser
         {
             QuickCheck(valueOf => valueOf("{0} + ( {1} + {2} )") == valueOf("( {0} + {1} ) + {2}"));
             QuickCheck(valueOf => valueOf("{0} * ( {1} * {2} )") == valueOf("( {0} * {1} ) * {2}"));
-            QuickCheck(valueOf => valueOf("{0} - ( {1} - {2} )") != valueOf("( {0} - {1} ) - {2}"));            
         }
 
         [Test]
@@ -67,17 +66,18 @@ namespace FunctionalCSharpTests.Parser
 
         private static Func<int, bool> Calculate(Func<Func<string, int>, bool> check)
         {
+            var rnd = new System.Random();
             return x =>
-            {
-                var rnd = new System.Random(x);
-                var xs = Enumerable.Range(0, 10).Select(_ => rnd.Next(100)).ToArray();
+            {         
+                var xs = Enumerable.Range(0, 3).Select(_ => rnd.Next(100)).ToArray();
                 return check(exp => Calculate(String.Format(exp, xs.Cast<object>().ToArray())));
             };
         }
 
-        private static int Calculate(string exp)
+        private static int Calculate(IEnumerable<char> exp)
         {
-            return  CalculatorCombinators.Calculator().Execute(exp).First();            
+            int result = CalculatorCombinators.Calculator().Execute(exp).First();
+            return result;
         }
     }
 }
