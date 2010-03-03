@@ -34,9 +34,10 @@ namespace FunctionalCSharp
         private readonly IDictionary<string, Delegate> _methodsDictionary = new Dictionary<string, Delegate>();
         private static readonly IDictionary<TypeKey, Func<object, object>> TypeCache = new Dictionary<TypeKey, Func<object, object>>();
 
-        private class TypeKey
+        private class TypeKey : IEquatable<TypeKey>
         {
             private readonly string _key;
+            private readonly int _hashCode;
 
             public static TypeKey Create<T>(IEnumerable<KeyValuePair<string, Delegate>> methods)
             {
@@ -45,19 +46,28 @@ namespace FunctionalCSharp
 
             private TypeKey(Type type, IEnumerable<KeyValuePair<string, Delegate>> methods)
             {
-                _key = type.FullName + methods.Aggregate(" ", (x, y) => x + " " + y.Key);
+                _key = type.FullName + methods.Aggregate(" ", (x, y) => String.Format("{0} {1}", x, y.Key));
+                _hashCode = _key.GetHashCode();
             }
 
             public override int GetHashCode()
             {
-                return _key.GetHashCode();
+                return _hashCode;
             }
 
             public override bool Equals(object obj)
             {
-                var other = obj as TypeKey;
-                if (other == null) return false;
-                return _key == other._key;
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != typeof (TypeKey)) return false;
+                return Equals((TypeKey) obj);
+            }
+
+            public bool Equals(TypeKey other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Equals(other._key, _key);
             }
 
             public override string ToString()
@@ -82,7 +92,7 @@ namespace FunctionalCSharp
         public void AddMethod(MethodInfo info, Delegate value)
         {
             var name = info.Name;
-            if (name.StartsWith("get_") &&
+            if (name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) &&
                 value.Method.GetParameters().Select(p => p.ParameterType).Contains(info.ReturnType))
                 name = name.Replace("get_", "set_");
             _methodsDictionary.Add(GetMethodKey(info, name), value);
@@ -211,7 +221,7 @@ namespace FunctionalCSharp
 
         private bool HasLambdaToDelegateTo(MethodInfo method)
         {
-            if (method.IsGenericMethod && _methodsDictionary.Count > 0 && _methodsDictionary.Keys.Any(s => s.StartsWith(method.Name)))
+            if (method.IsGenericMethod && _methodsDictionary.Count > 0 && _methodsDictionary.Keys.Any(s => s.StartsWith(method.Name, StringComparison.OrdinalIgnoreCase)))
                 return true;
             return _methodsDictionary.ContainsKey(GetMethodKey(method, method.Name));
         }
