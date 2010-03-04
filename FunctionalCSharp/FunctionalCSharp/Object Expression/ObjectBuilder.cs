@@ -99,12 +99,17 @@ namespace FunctionalCSharp
             return;
         }
 
-        private static string GetMethodKey(MethodInfo info, string name)
+        private static string GetMethodKey(MethodBase info, string name)
         {
-            if (info.IsGenericMethod)
+            name = String.Format("{0}({1})", name, info.GetParameters()
+                               .Select(p => p.ParameterType)
+                               .Select(t => t.Name)
+                               .Aggregate("", (x, y) => String.Format("{0}, {1}", x, y)));
+
+            if (info.IsGenericMethod && !info.IsGenericMethodDefinition)
                 name = String.Format("{0}{1}", name,
                                      info.GetGenericArguments().Select(t => t.FullName).Aggregate(
-                                         (x, y) => String.Format("{0}{1}", x, y)));
+                                         (x, y) => String.Format("{0}{1}", x, y)));  
             return name;
         }       
 
@@ -230,10 +235,10 @@ namespace FunctionalCSharp
         {
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, _methodsField);
-            il.Emit(OpCodes.Ldstr, method.Name);
+            il.Emit(OpCodes.Ldstr, GetMethodKey(method, method.Name));
             il.Emit(OpCodes.Callvirt, typeof(Dictionary<string, Delegate>).GetProperty("Item").GetGetMethod());
 
-            var funcType = _methodsDictionary[method.Name].GetType();
+            var funcType = _methodsDictionary[GetMethodKey(method, method.Name)].GetType();
             il.Emit(OpCodes.Castclass, funcType);
 
             var parameters = method.GetParameters();
@@ -251,7 +256,7 @@ namespace FunctionalCSharp
 
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, _methodsField);
-            il.Emit(OpCodes.Ldstr, method.Name);
+            il.Emit(OpCodes.Ldstr, GetMethodKey(method, method.Name));
 
             il.Emit(OpCodes.Ldtoken, method.GetGenericArguments()[0]);
             il.Emit(OpCodes.Call, typeof (Type).GetMethod("GetTypeFromHandle"));

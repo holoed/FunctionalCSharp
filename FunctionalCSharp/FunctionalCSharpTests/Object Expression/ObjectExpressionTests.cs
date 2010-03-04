@@ -189,6 +189,24 @@ namespace FunctionalCSharpTests
             Assert.IsNotNull(foo);
         }
 
+        [Test]
+        public void Overloads()
+        {
+            var ret = ObjectExpression
+                .New<IOverloads>()
+                .With(o => o.Do, (string x) => x)
+                .With(o => o.Do, (int x) => x)
+                .Return();
+            ret.Do("Hello");
+            ret.Do(42);                
+        }
+
+        public interface IOverloads
+        {
+            string Do(string x);
+            int Do(int y);
+        }
+
         public static IFoo<T> CreateAnonymous<T>(T t)
         {
             return ObjectExpression.New<IFoo<T>>().Return();
