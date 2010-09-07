@@ -16,6 +16,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace FunctionalCSharp
 {
@@ -24,6 +25,16 @@ namespace FunctionalCSharp
         public static PatternMatching<T> Lambda<T>(this PatternMatching<T> x, Func<IEnumerable<ParameterExpression>, Expression, object> f)
         {
             return x.With<LambdaExpression>(p => f(p.Parameters, p.Body));
+        }
+
+        public static PatternMatching<T> Unary<T>(this PatternMatching<T> x, Func<Expression, object> f)
+        {
+            return x.With<UnaryExpression>(p => f(p.Operand));
+        }
+
+        public static PatternMatching<T> MethodCall<T>(this PatternMatching<T> x, Func<MethodInfo, IEnumerable<Expression>, object> f)
+        {
+            return x.With<MethodCallExpression>(p => f(p.Method, p.Arguments));
         }
 
         public static PatternMatching<T> Param<T>(this PatternMatching<T> x, Func<string, object> f)
