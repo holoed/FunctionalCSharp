@@ -65,6 +65,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DiscriminatedUnions\DataType.cs" />
+    <Compile Include="DiscriminatedUnions\PatternMatchingDataTypeExtensions.cs" />
     <Compile Include="Maybe\Maybe.cs" />
     <Compile Include="Maybe\None.cs" />
     <Compile Include="Maybe\Some.cs" />
