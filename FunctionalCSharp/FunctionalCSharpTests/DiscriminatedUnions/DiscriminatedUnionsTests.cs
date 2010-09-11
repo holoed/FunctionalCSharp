@@ -89,5 +89,21 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
 
             Assert.AreEqual("let compose = fun f -> fun g -> fun x -> (g (f x)) in compose", toString(exp));
         }
+
+        [Test]
+        public void Equality()
+        {
+            var exp = DataType.New<Exp>();
+            Assert.AreEqual(exp.Var("x"), exp.Var("x"));
+            Assert.AreNotEqual(exp.Var("x"), exp.Var("y"));
+            Assert.AreNotEqual(exp.Var("x"), exp.Lam("y", exp.Var("x")));
+
+            Assert.AreEqual(exp.Lam("x", exp.Var("x")), exp.Lam("x", exp.Var("x")));
+            Assert.AreNotEqual(exp.Lam("x", exp.Var("x")), exp.Lam("x", exp.Var("y")));
+            Assert.AreNotEqual(exp.Lam("x", exp.Var("x")), exp.Lam("y", exp.Var("x")));
+
+            Assert.AreEqual(exp.App(exp.Var("x"), exp.Var("x")), exp.App(exp.Var("x"), exp.Var("x")));
+            Assert.AreNotEqual(exp.App(exp.Var("x"), exp.Var("x")), exp.App(exp.Var("y"), exp.Var("x")));
+        }
     }
 }
