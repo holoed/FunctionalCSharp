@@ -53,7 +53,6 @@ namespace FunctionalCSharp.DiscriminatedUnions
         private static Func<object> CreateDynamicConstructor(TypeBuilder typeBuilder)
         {
             var type = typeBuilder.CreateType();
-            _assemblyBuilder.Save("test.dll");
             var dynamic = new DynamicMethod("CreateInstance",
                                             typeof(object),
                                             new Type[0],
@@ -129,7 +128,8 @@ namespace FunctionalCSharp.DiscriminatedUnions
 
         private static TypeBuilder BuildValueConstructor<a>(MethodInfo method)
         {
-            var typeBuilder = _module.DefineType(method.Name, TypeAttributes.NotPublic | TypeAttributes.Class);
+            var typeName = typeof (a).FullName;
+            var typeBuilder = _module.DefineType(typeName + "." + method.Name, TypeAttributes.NotPublic | TypeAttributes.Class);
             typeBuilder.AddInterfaceImplementation(typeof(a));
             EmitItemConstructor(typeBuilder, method);
             EmitMethods<a>(typeBuilder, CreateEmptyMethodBody);
@@ -171,7 +171,7 @@ namespace FunctionalCSharp.DiscriminatedUnions
 
         private static string BuildDynamicName<a>()
         {
-            return typeof(a).Name + "DataType" + _id++;
+            return typeof(a).FullName + "DataType" + _id++;
         }
     }
 }

@@ -75,6 +75,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DiscriminatedUnions\DiscriminatedUnionsTests.cs" />
+    <Compile Include="DiscriminatedUnions\Samples\LambdaCalculus\LambdaCalculusTests.cs" />
+    <Compile Include="DiscriminatedUnions\Samples\LambdaCalculus\LambdaCalculus.cs" />
     <Compile Include="Object Expression\ObjectExpressionTests.cs" />
     <Compile Include="Parser\CalculatorTests.cs" />
     <Compile Include="Parser\CharParserTests.cs" />

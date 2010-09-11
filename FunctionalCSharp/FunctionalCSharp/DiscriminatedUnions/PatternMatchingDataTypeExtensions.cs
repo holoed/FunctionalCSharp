@@ -44,6 +44,13 @@ namespace FunctionalCSharp.DiscriminatedUnions
                 t1 => handler.DynamicInvoke(t1.GetType().GetFields().Select(f => f.GetValue(t1)).ToArray()));
         }
 
+        public static PatternMatching<a> With<a, b, c, d, e>(this PatternMatching<a> host, Expression<Func<a, Func<b, c, d, e, object>>> method, Func<b, c, d, e, object> handler)
+        {
+            return host.With<a>(
+                t => t.GetType().Name == GetMethodName(method),
+                t1 => handler.DynamicInvoke(t1.GetType().GetFields().Select(f => f.GetValue(t1)).ToArray()));
+        }
+
         private static string GetMethodName(Expression method)
         {
             return method.Match()
