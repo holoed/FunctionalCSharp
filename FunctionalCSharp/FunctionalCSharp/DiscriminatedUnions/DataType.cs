@@ -131,12 +131,13 @@ namespace FunctionalCSharp.DiscriminatedUnions
             var typeName = typeof (a).FullName;
             var typeBuilder = _module.DefineType(typeName + "." + method.Name, TypeAttributes.NotPublic | TypeAttributes.Class);
             typeBuilder.AddInterfaceImplementation(typeof(a));
-            EmitItemConstructor(typeBuilder, method);
+            var fields = EmitItemConstructor(typeBuilder, method);
             EmitMethods<a>(typeBuilder, CreateEmptyMethodBody);
+            EmitEquality(typeBuilder, fields);
             return typeBuilder;
         }
 
-        private static void EmitItemConstructor(TypeBuilder typeBuilder, MethodInfo methodInfo)
+        private static IEnumerable<FieldBuilder> EmitItemConstructor(TypeBuilder typeBuilder, MethodInfo methodInfo)
         {
             var parameterInfos = methodInfo.GetParameters();
             var constructorBuilder = typeBuilder.DefineConstructor(
@@ -159,6 +160,87 @@ namespace FunctionalCSharp.DiscriminatedUnions
                 gen.Emit(OpCodes.Stfld, fieldBuilder);
             }
             gen.Emit(OpCodes.Ret);
+            return fields;
+        }
+
+        private static void EmitEquality(TypeBuilder typeBuilder, IEnumerable<FieldBuilder> fields)
+        {
+            var methodBuilder = typeBuilder.DefineMethod("Equals", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard, typeof(bool), new[]{typeof(object)});
+            var ilGen = methodBuilder.GetILGenerator();
+            var loc0 = ilGen.DeclareLocal(typeof (bool));
+            var loc1 = ilGen.DeclareLocal(typeof(bool));
+            var loc2 = ilGen.DeclareLocal(typeBuilder);
+            ilGen.Emit(OpCodes.Ldnull);
+            ilGen.Emit(OpCodes.Ldarg_1);
+            ilGen.Emit(OpCodes.Call, typeof(object).GetMethod("ReferenceEquals", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Ldc_I4_0);
+            ilGen.Emit(OpCodes.Ceq);
+            ilGen.Emit(OpCodes.Stloc, loc1);
+            ilGen.Emit(OpCodes.Ldloc, loc1);
+            var then = ilGen.DefineLabel();
+            var end = ilGen.DefineLabel();
+            ilGen.Emit(OpCodes.Brtrue_S, then);
+            ilGen.Emit(OpCodes.Ldc_I4_0);
+            ilGen.Emit(OpCodes.Stloc, loc0);
+            ilGen.Emit(OpCodes.Br, end);
+            ilGen.MarkLabel(then);
+            ilGen.Emit(OpCodes.Ldarg_0);
+            ilGen.Emit(OpCodes.Ldarg_1);
+            ilGen.Emit(OpCodes.Call, typeof(object).GetMethod("ReferenceEquals", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Ldc_I4_0);
+            ilGen.Emit(OpCodes.Ceq);
+            ilGen.Emit(OpCodes.Stloc, loc1);
+            ilGen.Emit(OpCodes.Ldloc, loc1);
+            var then2 = ilGen.DefineLabel();
+            ilGen.Emit(OpCodes.Brtrue_S, then2);
+            ilGen.Emit(OpCodes.Ldc_I4_1);
+            ilGen.Emit(OpCodes.Stloc, loc0);
+            ilGen.Emit(OpCodes.Br, end);
+            ilGen.MarkLabel(then2);
+            ilGen.Emit(OpCodes.Ldarg_1);
+            ilGen.Emit(OpCodes.Callvirt, typeof(Object).GetMethod("GetType"));
+            ilGen.Emit(OpCodes.Ldtoken, typeBuilder.TypeToken.Token);
+            ilGen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Call, typeof(Type).GetMethod("op_Inequality", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Ldc_I4_0);
+            ilGen.Emit(OpCodes.Ceq);
+            ilGen.Emit(OpCodes.Stloc, loc1);
+            ilGen.Emit(OpCodes.Ldloc, loc1);
+            var then3 = ilGen.DefineLabel();
+            ilGen.Emit(OpCodes.Brtrue_S, then3);
+            ilGen.Emit(OpCodes.Ldc_I4_0);
+            ilGen.Emit(OpCodes.Stloc, loc0);
+            ilGen.Emit(OpCodes.Br, end);
+            ilGen.MarkLabel(then3);
+            ilGen.Emit(OpCodes.Ldarg_1);
+            ilGen.Emit(OpCodes.Castclass, typeBuilder.TypeToken.Token);
+            ilGen.Emit(OpCodes.Stloc, loc2);
+
+            ilGen.Emit(OpCodes.Ldc_I4_1);
+            ilGen.Emit(OpCodes.Stloc, loc0);
+            foreach (var field in fields)
+            {
+                ilGen.Emit(OpCodes.Ldloc, loc2);
+                ilGen.Emit(OpCodes.Ldfld, field);
+                ilGen.Emit(OpCodes.Ldarg_0);
+                ilGen.Emit(OpCodes.Ldfld, field);
+                ilGen.Emit(OpCodes.Call, typeof (object).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static));
+                ilGen.Emit(OpCodes.Ldc_I4_1);
+                ilGen.Emit(OpCodes.Ceq);
+                ilGen.Emit(OpCodes.Stloc, loc1);
+                ilGen.Emit(OpCodes.Ldloc, loc1);
+                var thenField = ilGen.DefineLabel();
+                ilGen.Emit(OpCodes.Brtrue, thenField);
+                ilGen.Emit(OpCodes.Ldc_I4_0);
+                ilGen.Emit(OpCodes.Stloc, loc0);
+                ilGen.Emit(OpCodes.Br, end);
+                ilGen.MarkLabel(thenField);             
+            }
+            
+            ilGen.Emit(OpCodes.Br_S, end);
+            ilGen.MarkLabel(end);
+            ilGen.Emit(OpCodes.Ldloc, loc0);
+            ilGen.Emit(OpCodes.Ret);
         }
 
         private TypeBuilder EmitEmptyType<a>()

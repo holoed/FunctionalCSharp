@@ -40,7 +40,7 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
         public static Exp Interpret(Exp exp)
         {
             var e1 = Reduce(exp);
-            return ExpToString(e1) == ExpToString(exp) ? exp : Interpret(e1);
+            return Equals(e1, exp) ? exp : Interpret(e1);
         }
 
         public static string ExpToString(Exp exp)
