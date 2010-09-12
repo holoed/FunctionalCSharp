@@ -75,12 +75,12 @@ namespace FunctionalCSharp.DiscriminatedUnions
 
         private static string GetMethodName(Expression method)
         {
-            return method.Match()
-                .Lambda((args, body) => GetMethodName(body))
-                .Unary(GetMethodName)
-                .MethodCall((mi, ps) => GetMethodName(ps[2]))
-                .Const(c => ((MethodInfo)c).Name)
-                .Return<string>();
+            var lambda = (LambdaExpression) method;
+            var unary = (UnaryExpression) lambda.Body;
+            var methodCall = (MethodCallExpression) unary.Operand;
+            var constant = (ConstantExpression) methodCall.Arguments[2];
+            var methodInfo = (MethodInfo) constant.Value;
+            return methodInfo.Name;
         }
     }
 }
