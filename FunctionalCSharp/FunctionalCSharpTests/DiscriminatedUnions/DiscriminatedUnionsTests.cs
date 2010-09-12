@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-#region License
+﻿#region License
 
 /* ****************************************************************************
  * Copyright (c) Edmondo Pentangelo. 

@@ -22,6 +22,11 @@ using System.Threading;
 
 namespace FunctionalCSharp.DiscriminatedUnions
 {
+    public interface IDataType
+    {
+        object[] Values { get; }
+    }
+
     public class DataType
     {
         private static AssemblyBuilder _assemblyBuilder;
@@ -29,9 +34,22 @@ namespace FunctionalCSharp.DiscriminatedUnions
         private string _generatedTypeName;
         private static int _id;
         private static readonly IDictionary<Type, Func<object>> TypeCache = new Dictionary<Type, Func<object>>();
+        private static readonly MethodInfo GetTypeMethod;
+        private static readonly MethodInfo ReferenceEqualsMethod;
+        private static readonly MethodInfo EqualsMethod;
+        private static readonly MethodInfo GetTypeFromHandleMethod;
+        private static readonly MethodInfo OpInequalityMethod;
+        private static readonly MethodInfo GetValuesMethod;
 
         static DataType()
         {
+            GetTypeMethod = typeof(Object).GetMethod("GetType", BindingFlags.Public | BindingFlags.Instance | BindingFlags.ExactBinding);
+            ReferenceEqualsMethod = typeof(object).GetMethod("ReferenceEquals", BindingFlags.Public | BindingFlags.Static | BindingFlags.ExactBinding);
+            EqualsMethod = typeof(object).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static | BindingFlags.ExactBinding);
+            GetTypeFromHandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", BindingFlags.Public | BindingFlags.Static);
+            OpInequalityMethod = typeof(Type).GetMethod("op_Inequality", BindingFlags.Public | BindingFlags.Static);
+            GetValuesMethod = typeof(IDataType).GetProperty("Values").GetGetMethod();
+
             SetupBuilderAndModule("DataTypes");
         }
 
@@ -130,12 +148,14 @@ namespace FunctionalCSharp.DiscriminatedUnions
         {
             var typeName = typeof (a).FullName;
             var typeBuilder = _module.DefineType(typeName + "." + method.Name, TypeAttributes.NotPublic | TypeAttributes.Class);
+            typeBuilder.AddInterfaceImplementation(typeof(IDataType));
             typeBuilder.AddInterfaceImplementation(typeof(a));
             var fields = EmitItemConstructor(typeBuilder, method);
             EmitMethods<a>(typeBuilder, CreateEmptyMethodBody);
             EmitEquality(typeBuilder, fields);
+            EmitValuesGetter(typeBuilder, fields);
             return typeBuilder;
-        }
+        }        
 
         private static IEnumerable<FieldBuilder> EmitItemConstructor(TypeBuilder typeBuilder, MethodInfo methodInfo)
         {
@@ -163,16 +183,44 @@ namespace FunctionalCSharp.DiscriminatedUnions
             return fields;
         }
 
-        private static void EmitEquality(TypeBuilder typeBuilder, IEnumerable<FieldBuilder> fields)
+        private static void EmitValuesGetter(TypeBuilder typeBuilder, IEnumerable<FieldBuilder> fields)
         {
+            var attributes = GetValuesMethod.Attributes;
+            attributes &= ~MethodAttributes.Abstract;
+
+            var propertyBuilder = typeBuilder.DefineProperty("Values", PropertyAttributes.None, CallingConventions.Standard, typeof (object[]),
+                                       new Type[0]);           
+            var methodBuilder = typeBuilder.DefineMethod(GetValuesMethod.Name,  attributes, GetValuesMethod.ReturnType, new Type[0]);
+            propertyBuilder.SetGetMethod(methodBuilder);
+            var ilGen = methodBuilder.GetILGenerator();
+            var loc = ilGen.DeclareLocal(typeof(object[]));
+            ilGen.Emit(OpCodes.Ldc_I4, fields.Count());
+            ilGen.Emit(OpCodes.Newarr, typeof(object));
+            ilGen.Emit(OpCodes.Stloc, loc);            
+            int index = 0;
+            foreach (var field in fields)
+            {
+                ilGen.Emit(OpCodes.Ldloc, loc);
+                ilGen.Emit(OpCodes.Ldc_I4, index);
+                ilGen.Emit(OpCodes.Ldarg_0);           
+                ilGen.Emit(OpCodes.Ldfld, field);
+                ilGen.Emit(OpCodes.Stelem_Ref);           
+                index++;
+            }
+            ilGen.Emit(OpCodes.Ldloc, loc);
+            ilGen.Emit(OpCodes.Ret);
+        }
+
+        private static void EmitEquality(TypeBuilder typeBuilder, IEnumerable<FieldBuilder> fields)
+        {          
             var methodBuilder = typeBuilder.DefineMethod("Equals", MethodAttributes.Public | MethodAttributes.Virtual, CallingConventions.Standard, typeof(bool), new[]{typeof(object)});
             var ilGen = methodBuilder.GetILGenerator();
             var loc0 = ilGen.DeclareLocal(typeof (bool));
             var loc1 = ilGen.DeclareLocal(typeof(bool));
             var loc2 = ilGen.DeclareLocal(typeBuilder);
             ilGen.Emit(OpCodes.Ldnull);
-            ilGen.Emit(OpCodes.Ldarg_1);
-            ilGen.Emit(OpCodes.Call, typeof(object).GetMethod("ReferenceEquals", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Ldarg_1);            
+            ilGen.Emit(OpCodes.Call, ReferenceEqualsMethod);
             ilGen.Emit(OpCodes.Ldc_I4_0);
             ilGen.Emit(OpCodes.Ceq);
             ilGen.Emit(OpCodes.Stloc, loc1);
@@ -186,7 +234,7 @@ namespace FunctionalCSharp.DiscriminatedUnions
             ilGen.MarkLabel(then);
             ilGen.Emit(OpCodes.Ldarg_0);
             ilGen.Emit(OpCodes.Ldarg_1);
-            ilGen.Emit(OpCodes.Call, typeof(object).GetMethod("ReferenceEquals", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Call, ReferenceEqualsMethod);
             ilGen.Emit(OpCodes.Ldc_I4_0);
             ilGen.Emit(OpCodes.Ceq);
             ilGen.Emit(OpCodes.Stloc, loc1);
@@ -197,11 +245,11 @@ namespace FunctionalCSharp.DiscriminatedUnions
             ilGen.Emit(OpCodes.Stloc, loc0);
             ilGen.Emit(OpCodes.Br, end);
             ilGen.MarkLabel(then2);
-            ilGen.Emit(OpCodes.Ldarg_1);
-            ilGen.Emit(OpCodes.Callvirt, typeof(Object).GetMethod("GetType"));
+            ilGen.Emit(OpCodes.Ldarg_1);            
+            ilGen.Emit(OpCodes.Callvirt, GetTypeMethod);
             ilGen.Emit(OpCodes.Ldtoken, typeBuilder.TypeToken.Token);
-            ilGen.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle", BindingFlags.Public | BindingFlags.Static));
-            ilGen.Emit(OpCodes.Call, typeof(Type).GetMethod("op_Inequality", BindingFlags.Public | BindingFlags.Static));
+            ilGen.Emit(OpCodes.Call, GetTypeFromHandleMethod);            
+            ilGen.Emit(OpCodes.Call, OpInequalityMethod);
             ilGen.Emit(OpCodes.Ldc_I4_0);
             ilGen.Emit(OpCodes.Ceq);
             ilGen.Emit(OpCodes.Stloc, loc1);
@@ -224,7 +272,7 @@ namespace FunctionalCSharp.DiscriminatedUnions
                 ilGen.Emit(OpCodes.Ldfld, field);
                 ilGen.Emit(OpCodes.Ldarg_0);
                 ilGen.Emit(OpCodes.Ldfld, field);
-                ilGen.Emit(OpCodes.Call, typeof (object).GetMethod("Equals", BindingFlags.Public | BindingFlags.Static));
+                ilGen.Emit(OpCodes.Call, EqualsMethod);
                 ilGen.Emit(OpCodes.Ldc_I4_1);
                 ilGen.Emit(OpCodes.Ceq);
                 ilGen.Emit(OpCodes.Stloc, loc1);
