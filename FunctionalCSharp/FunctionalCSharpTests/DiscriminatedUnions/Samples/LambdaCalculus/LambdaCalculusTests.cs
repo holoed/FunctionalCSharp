@@ -150,9 +150,16 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
         }
 
         [Test]
-        public void FactorialOfSix()
+        public void FactorialOfThree()
         {
             Assert.AreEqual(LambdaCalculus.ExpToString(_six), LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_factorial, _three))));
+        }
+
+        [Test]
+        public void FactorialOfFour()
+        {
+            Assert.AreEqual(LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_b.App(_mult, _b.App(_b.App(_mult, _four), _three)), _two))), 
+                LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_factorial, _four))));
         }
     }
 }
