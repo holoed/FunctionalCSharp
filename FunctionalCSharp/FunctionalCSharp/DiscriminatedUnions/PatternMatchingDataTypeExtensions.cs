@@ -26,28 +26,40 @@ namespace FunctionalCSharp.DiscriminatedUnions
         {
             return host.With<a>(
                 t => IsMatch(t, method),
-                t1 => handler.DynamicInvoke(GetValues(t1)));
+                t1 => handler((b) GetValues(t1)[0]));
         }
        
         public static PatternMatching<a> With<a, b, c>(this PatternMatching<a> host, Expression<Func<a, Func<b, c, object>>> method, Func<b, c, object> handler)
         {
             return host.With<a>(
                 t => IsMatch(t, method),
-                t1 => handler.DynamicInvoke(GetValues(t1)));
+                t1 =>
+                    {
+                        var values = GetValues(t1);
+                        return handler((b) values[0], (c) values[1]);
+                    });
         }
         
         public static PatternMatching<a> With<a, b, c, d>(this PatternMatching<a> host, Expression<Func<a, Func<b, c, d, object>>> method, Func<b, c, d, object> handler)
         {
             return host.With<a>(
                 t => IsMatch(t, method),
-                t1 => handler.DynamicInvoke(GetValues(t1)));
+                t1 =>
+                    {
+                        var values = GetValues(t1);
+                        return handler((b)values[0], (c)values[1], (d)values[2]);
+                    });
         }
 
         public static PatternMatching<a> With<a, b, c, d, e>(this PatternMatching<a> host, Expression<Func<a, Func<b, c, d, e, object>>> method, Func<b, c, d, e, object> handler)
         {
             return host.With<a>(
                 t => IsMatch(t, method),
-                t1 => handler.DynamicInvoke(GetValues(t1)));
+                t1 =>
+                    {
+                        var values = GetValues(t1);
+                        return handler((b)values[0], (c)values[1], (d)values[2], (e)values[3]);
+                    });
         }
 
         private static bool IsMatch<a>(a t, Expression method)
@@ -65,7 +77,7 @@ namespace FunctionalCSharp.DiscriminatedUnions
             return method.Match()
                 .Lambda((args, body) => GetMethodName(body))
                 .Unary(GetMethodName)
-                .MethodCall((mi, ps) => GetMethodName(ps.ElementAt(2)))
+                .MethodCall((mi, ps) => GetMethodName(ps[2]))
                 .Const(c => ((MethodInfo)c).Name)
                 .Return<string>();
         }

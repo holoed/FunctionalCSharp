@@ -32,7 +32,7 @@ namespace FunctionalCSharp
             return x.With<UnaryExpression>(p => f(p.Operand));
         }
 
-        public static PatternMatching<T> MethodCall<T>(this PatternMatching<T> x, Func<MethodInfo, IEnumerable<Expression>, object> f)
+        public static PatternMatching<T> MethodCall<T>(this PatternMatching<T> x, Func<MethodInfo, IList<Expression>, object> f)
         {
             return x.With<MethodCallExpression>(p => f(p.Method, p.Arguments));
         }
