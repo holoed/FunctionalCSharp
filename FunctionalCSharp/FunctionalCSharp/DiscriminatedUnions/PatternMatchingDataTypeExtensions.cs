@@ -69,7 +69,8 @@ namespace FunctionalCSharp.DiscriminatedUnions
 
         private static object[] GetValues<a>(a obj)
         {
-            return obj.GetType().GetFields().Select(f => f.GetValue(obj)).ToArray();
+            var dataType = obj as IDataType;
+            return dataType != null ? dataType.Values : obj.GetType().GetFields().Select(f => f.GetValue(obj)).ToArray();
         }
 
         private static string GetMethodName(Expression method)
