@@ -22,7 +22,7 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
     [TestFixture]
     public class LambdaCalculusTests
     {
-        private Exp _b,_fix,_ifThenElse,_btrue,_bfalse,_isZero,_zero,_one,_mult,_two,_three,_four,_pred,_six;
+        private Exp _b,_fix,_ifThenElse,_btrue,_bfalse,_isZero,_zero,_one,_mult,_two,_three,_four,_pred,_six,_five;
         private Exp _factorial;
 
         [SetUp]
@@ -42,6 +42,7 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
             _two = _b.Lam("f", _b.Lam("x", _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.Var("x")))));
             _three = _b.Lam("f", _b.Lam("x", _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.Var("x"))))));
             _four = _b.Lam("f", _b.Lam("x", _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.Var("x")))))));
+            _five = _b.Lam("f", _b.Lam("x", _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.App(_b.Var("f"), _b.Var("x"))))))));
             _pred = _b.Lam("n", _b.Lam("f", _b.Lam("x", _b.App(_b.App(_b.App(_b.Var("n"), _b.Lam("g", _b.Lam("h", _b.App(_b.Var("h"), _b.App(_b.Var("g"), _b.Var("f")))))), _b.Lam("u", _b.Var("x"))), _b.Lam("u", _b.Var("u"))))));
             _six = LambdaCalculus.Interpret(_b.App(_b.App(_mult, _three), _two));
 
@@ -175,6 +176,13 @@ namespace FunctionalCSharpTests.DiscriminatedUnions
         {
             Assert.AreEqual(LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_b.App(_mult, _b.App(_b.App(_mult, _four), _three)), _two))), 
                 LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_factorial, _four))));
+        }
+
+        [Test]
+        public void FactorialOfFive()
+        {
+            Assert.AreEqual(LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_b.App(_mult, _b.App(_b.App(_mult, _b.App(_b.App(_mult, _five), _four)), _three)), _two))),
+                LambdaCalculus.ExpToString(LambdaCalculus.Interpret(_b.App(_factorial, _five))));
         }
     }
 }
